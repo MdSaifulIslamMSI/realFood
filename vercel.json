@@ -14,7 +14,15 @@
     ],
     "rewrites": [
         {
-            "source": "/stubs/:path*",
+            "source": "/e/",
+            "destination": "/api/stub"
+        },
+        {
+            "source": "/e",
+            "destination": "/api/stub"
+        },
+        {
+            "source": "/decide/",
             "destination": "/api/stub"
         }
     ],

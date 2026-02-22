@@ -27,17 +27,17 @@ function runCommand(index) {
     const cmd = commands[index];
     console.log(`Running: ${cmd}`);
 
-    const process = exec(cmd, { cwd: projectDir });
+    const child = exec(cmd, { cwd: projectDir });
 
-    process.stdout.on('data', (data) => {
+    child.stdout.on('data', (data) => {
         console.log(data.trim());
     });
 
-    process.stderr.on('data', (data) => {
+    child.stderr.on('data', (data) => {
         console.error(data.trim());
     });
 
-    process.on('close', (code) => {
+    child.on('close', (code) => {
         if (code !== 0) {
             console.error(`Command failed with exit code ${code}: ${cmd}`);
             process.exit(1);
