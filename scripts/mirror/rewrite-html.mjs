@@ -114,6 +114,9 @@ const main = async () => {
     }
   });
 
+  // Remove unused font preloads to prevent Chrome console warnings
+  $('link[rel="preload"][as="font"]').remove();
+
   // Ensure IDs remain unique for deterministic navigation and testing.
   const seenIds = new Set();
   $("[id]").each((_, element) => {

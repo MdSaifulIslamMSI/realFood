@@ -42,6 +42,16 @@
   ],
   "rewrites": [
     {
+      "source": "/stubs/:filename.js",
+      "has": [
+        {
+          "type": "query",
+          "key": "ver"
+        }
+      ],
+      "destination": "/api/stub"
+    },
+    {
       "source": "/stubs/:filename.js.compression=:type",
       "destination": "/stubs/:filename.js"
     },
