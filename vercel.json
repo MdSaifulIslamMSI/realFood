@@ -56,6 +56,36 @@
       "destination": "/api/stub"
     },
     {
+      "source": "/stubs/:filename.js",
+      "has": [
+        {
+          "type": "query",
+          "key": "ip"
+        }
+      ],
+      "destination": "/api/stub"
+    },
+    {
+      "source": "/stubs/:filename.js",
+      "has": [
+        {
+          "type": "query",
+          "key": "compression"
+        }
+      ],
+      "destination": "/api/stub"
+    },
+    {
+      "source": "/stubs/:filename.js",
+      "has": [
+        {
+          "type": "query",
+          "key": "_"
+        }
+      ],
+      "destination": "/api/stub"
+    },
+    {
       "source": "/stubs/:filename.js.compression=:type",
       "destination": "/stubs/:filename.js"
     },
