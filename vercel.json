@@ -42,6 +42,10 @@
   ],
   "rewrites": [
     {
+      "source": "/cdn-cgi/image/:options/images/:subpath*/:filename",
+      "destination": "/images/:subpath*/:filename"
+    },
+    {
       "source": "/stubs/:filename.js",
       "has": [
         {
