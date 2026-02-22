@@ -146,6 +146,10 @@ const main = async () => {
   });
 
   let nextHtml = $.html();
+
+  // Strip dynamic font preloads injected via Next.js flight payload to prevent Chrome warnings
+  nextHtml = nextHtml.replace(/\\n:HL\[\\"[^"]+\.woff2\\",\\"font\\"[^\]]*\]/g, "");
+
   if (rewriteMap.size > 0) {
     const pattern = new RegExp(
       Array.from(rewriteMap.keys())
