@@ -108,6 +108,23 @@ const main = async () => {
     }
   });
 
+  // 3d. Strip broken animation transforms from interactive elements
+  // The original Next.js JS animates translateY() away on load, but since
+  // we strip runtime JS, cards remain permanently displaced off-screen.
+  $('[style*="translateY"]').each((_, el) => {
+    const style = $(el).attr('style') || '';
+    const cleaned = style
+      .replace(/transform\s*:\s*translateY\([^)]*\)\s*;?/gi, '')
+      .replace(/;\s*$/, '')
+      .trim();
+    if (cleaned) {
+      $(el).attr('style', cleaned);
+    } else {
+      $(el).removeAttr('style');
+    }
+    rewrites++;
+  });
+
   // 4. Safe global literal replacement for deeply embedded nextjs JSON router data
   let nextHtml = $.html();
   for (const [sourceUrl, localPath] of rewriteMap.entries()) {
