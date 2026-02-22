@@ -49,6 +49,10 @@ const main = async () => {
   }
 
 
+  // Rewrite Next.js optimized image URLs to direct static paths to prevent Vercel 404s
+  html = html.replace(/\/_next\/image\?url=([^&"'\s]+)[^"'\s]*/gi, (match, url) => {
+    return decodeURIComponent(url);
+  });
 
   // Install network guard before app scripts execute.
   if (!html.includes("data-mirror-network-guard")) {
