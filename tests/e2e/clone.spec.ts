@@ -8,8 +8,8 @@ const BLOCKED_HOSTS = new Set(config.blockedHosts);
 
 const settle = async (page: Page): Promise<void> => {
   await page.goto("/");
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(1200);
+  await page.waitForLoadState("domcontentloaded");
+  await page.waitForTimeout(1500);
 };
 
 test("mirror root renders source sections", async ({ page }) => {

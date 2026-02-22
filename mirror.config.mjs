@@ -62,7 +62,7 @@ const config = {
         port: 4173,
         host: "127.0.0.1",
         /** Maximum requests per IP per window before rate limiting kicks in. */
-        rateLimit: { windowMs: 60_000, maxRequests: 3000 },
+        rateLimit: { windowMs: 60_000, maxRequests: 10_000 },
     },
 
     /** Asset download settings. */

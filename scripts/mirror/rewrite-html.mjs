@@ -76,6 +76,38 @@ const main = async () => {
     $('head').prepend('<script src="/stubs/network-guard.js" data-mirror-network-guard="true"></script>');
   }
 
+  // 3b. Strip third-party script/link tags that would fire before the network guard
+  const blockedPatterns = config.blockedHosts.map(h => h.replace(/\./g, '\\.'));
+  const blockedRegex = new RegExp(`https?://(?:${blockedPatterns.join('|')})`, 'i');
+
+  $('script[src]').each((_, el) => {
+    const src = $(el).attr('src');
+    if (src && blockedRegex.test(src)) {
+      $(el).remove();
+      rewrites++;
+    }
+  });
+
+  $('link[href]').each((_, el) => {
+    const href = $(el).attr('href');
+    if (href && blockedRegex.test(href)) {
+      $(el).remove();
+      rewrites++;
+    }
+  });
+
+  // 3c. Deduplicate elements with the same id (keep first occurrence)
+  const seenIds = new Set();
+  $('[id]').each((_, el) => {
+    const id = $(el).attr('id');
+    if (seenIds.has(id)) {
+      $(el).removeAttr('id');
+      rewrites++;
+    } else {
+      seenIds.add(id);
+    }
+  });
+
   // 4. Safe global literal replacement for deeply embedded nextjs JSON router data
   let nextHtml = $.html();
   for (const [sourceUrl, localPath] of rewriteMap.entries()) {
