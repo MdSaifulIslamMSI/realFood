@@ -1,6 +1,6 @@
 /* strict mirror network guard */
 (function () {
-  var BLOCKED = ["realfood.gov","cdn.realfood.gov","challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
+  var BLOCKED = ["challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
 
   function emitBlocked(reason, url, extra) {
     var detail = {

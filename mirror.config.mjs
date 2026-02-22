@@ -9,8 +9,6 @@ const config = {
 
     /** Hosts whose requests must be blocked at runtime in the mirror. */
     blockedHosts: [
-        "realfood.gov",
-        "cdn.realfood.gov",
         "challenges.cloudflare.com",
         "static.cloudflareinsights.com",
         "us-assets.i.posthog.com",
