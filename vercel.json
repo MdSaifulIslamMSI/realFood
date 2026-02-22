@@ -12,6 +12,12 @@
             ]
         }
     ],
+    "rewrites": [
+        {
+            "source": "/stubs/:path*",
+            "destination": "/stubs/noop-third-party.js"
+        }
+    ],
     "crons": [
         {
             "path": "/api/cron",

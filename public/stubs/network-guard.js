@@ -1,13 +1,6 @@
 /* strict mirror network guard */
 (function () {
-  var BLOCKED = [
-    "realfood.gov",
-    "cdn.realfood.gov",
-    "challenges.cloudflare.com",
-    "static.cloudflareinsights.com",
-    "us-assets.i.posthog.com",
-    "us.i.posthog.com"
-  ];
+  var BLOCKED = ["realfood.gov","cdn.realfood.gov","challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
 
   function isBlockedHost(host) {
     return BLOCKED.some(function (blockedHost) {
@@ -41,9 +34,13 @@
     if (tag === "img") {
       return isBlockedUrl(node.src || node.getAttribute("src"));
     }
+    if (tag === "iframe") {
+      return isBlockedUrl(node.src || node.getAttribute("src"));
+    }
     return false;
   }
 
+  /* --- fetch interception --- */
   var nativeFetch = window.fetch ? window.fetch.bind(window) : null;
   if (nativeFetch) {
     window.fetch = function (input, init) {
@@ -68,6 +65,7 @@
     };
   }
 
+  /* --- sendBeacon interception --- */
   if (navigator && typeof navigator.sendBeacon === "function") {
     var nativeBeacon = navigator.sendBeacon.bind(navigator);
     navigator.sendBeacon = function (url, data) {
@@ -78,6 +76,7 @@
     };
   }
 
+  /* --- XHR interception --- */
   if (window.XMLHttpRequest && window.XMLHttpRequest.prototype) {
     var xhrOpen = window.XMLHttpRequest.prototype.open;
     var xhrSend = window.XMLHttpRequest.prototype.send;
@@ -99,14 +98,10 @@
             self.dispatchEvent(new Event("loadend"));
           } catch (_) {}
           if (typeof self.onerror === "function") {
-            try {
-              self.onerror(new Event("error"));
-            } catch (_) {}
+            try { self.onerror(new Event("error")); } catch (_) {}
           }
           if (typeof self.onloadend === "function") {
-            try {
-              self.onloadend(new Event("loadend"));
-            } catch (_) {}
+            try { self.onloadend(new Event("loadend")); } catch (_) {}
           }
         });
         return;
@@ -115,6 +110,7 @@
     };
   }
 
+  /* --- DOM injection interception --- */
   if (window.Node && window.Node.prototype) {
     var appendChild = window.Node.prototype.appendChild;
     var insertBefore = window.Node.prototype.insertBefore;
@@ -144,6 +140,7 @@
     };
   }
 
+  /* --- setAttribute interception --- */
   if (window.Element && window.Element.prototype) {
     var setAttribute = window.Element.prototype.setAttribute;
     window.Element.prototype.setAttribute = function (name, value) {
@@ -154,4 +151,18 @@
       return setAttribute.call(this, name, value);
     };
   }
+
+  /* --- Worker interception --- */
+  if (window.Worker) {
+    var NativeWorker = window.Worker;
+    window.Worker = function (url, options) {
+      if (isBlockedUrl(url)) {
+        return { postMessage: function(){}, terminate: function(){}, addEventListener: function(){}, removeEventListener: function(){} };
+      }
+      return new NativeWorker(url, options);
+    };
+    window.Worker.prototype = NativeWorker.prototype;
+  }
+
+  /* --- dynamic import() interception via import map is not possible, so we block via fetch --- */
 })();
