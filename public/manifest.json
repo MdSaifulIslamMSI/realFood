@@ -1,0 +1,38 @@
+{
+  "name": "Dietary Guidelines for Americans, 2025-2030",
+  "short_name": "Dietary Guidelines",
+  "description": "The Dietary Guidelines for Americans provides science-based advice on what to eat and drink to promote health, reduce risk of chronic disease, and meet nutrient needs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F0D6",
+  "theme_color": "#F3F0D6",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

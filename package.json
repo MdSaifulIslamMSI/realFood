@@ -1,25 +1,42 @@
 {
-  "name": "clone",
-  "version": "0.1.0",
+  "name": "realfood-mirror",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "serve": "node scripts/mirror/serve-mirror.mjs",
+    "mirror:capture:html": "node scripts/mirror/capture-html.mjs",
+    "mirror:capture:runtime": "node scripts/mirror/capture-runtime-graph.mjs",
+    "mirror:capture:refs": "node scripts/mirror/extract-static-refs.mjs",
+    "mirror:capture": "npm run mirror:capture:html && npm run mirror:capture:runtime && npm run mirror:capture:refs",
+    "mirror:build:manifest": "node scripts/mirror/build-manifest.mjs",
+    "mirror:build:download": "node scripts/mirror/download-assets.mjs",
+    "mirror:build:sanitize": "node scripts/mirror/sanitize-third-party.mjs",
+    "mirror:build:rewrite": "node scripts/mirror/rewrite-html.mjs",
+    "mirror:build": "npm run mirror:build:manifest && npm run mirror:build:download && npm run mirror:build:rewrite",
+    "mirror:refresh": "npm run mirror:capture && npm run mirror:build",
+    "mirror:serve": "node scripts/mirror/serve-mirror.mjs --port 4173",
+    "mirror:verify:bytes": "node scripts/mirror/verify-byte-parity.mjs",
+    "mirror:verify:network": "node scripts/mirror/verify-network-gate.mjs",
+    "mirror:verify:dom": "node scripts/mirror/verify-dom-parity.mjs",
+    "mirror:verify": "node scripts/mirror/verify-all.mjs",
+    "parity:capture": "node scripts/capture-parity.mjs",
+    "parity:compare": "node scripts/compare-parity.mjs",
+    "test:parity": "npm run parity:capture && npm run parity:compare",
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "test": "vitest run"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.3"
+    "htmlparser2": "^9.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.3",
-    "@eslint/eslintrc": "^3"
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "typescript": "^5",
+    "vitest": "^3.0.0"
   }
 }

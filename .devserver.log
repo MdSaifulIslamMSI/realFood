@@ -1,0 +1,14 @@
+
+> clone@0.1.0 dev
+> next dev --turbopack --port 3000
+
+   ▲ Next.js 15.3.3 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.16.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1613ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2s
+ HEAD / 200 in 2318ms
+ GET / 200 in 491ms

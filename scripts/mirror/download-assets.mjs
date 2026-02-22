@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+/**
+ * download-assets – Downloads all assets listed in the snapshot manifest.
+ * Features: concurrent downloads, incremental sync (skip unchanged), retry with backoff.
+ */
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import config from "../../mirror.config.mjs";
+import { validateManifest } from "./lib/schema.mjs";
+import { createLogger, delay, fetchWithRetry, sha256 } from "./lib/utils.mjs";
+
+const log = createLogger("download-assets");
+
+const MANIFEST_PATH = new URL("../../artifacts/mirror/snapshot-manifest.json", import.meta.url);
+const PUBLIC_ROOT = fileURLToPath(new URL("../../public/", import.meta.url));
+
+const toFsPath = (localPath) => {
+  if (!localPath.startsWith("/")) {
+    throw new Error(`localPath must start with '/': ${localPath}`);
+  }
+
+  const segments = localPath
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => decodeURIComponent(segment));
+
+  return join(PUBLIC_ROOT, ...segments);
+};
+
+/**
+ * Run download tasks with a concurrency pool.
+ * @param {Array} tasks - Array of async functions to execute.
+ * @param {number} concurrency - Maximum concurrent tasks.
+ */
+const runWithConcurrency = async (tasks, concurrency) => {
+  const results = [];
+  let index = 0;
+
+  const runNext = async () => {
+    while (index < tasks.length) {
+      const currentIndex = index;
+      index += 1;
+      results[currentIndex] = await tasks[currentIndex]();
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => runNext());
+  await Promise.all(workers);
+  return results;
+};
+
+const main = async () => {
+  const startMs = Date.now();
+  const manifest = JSON.parse(await readFile(MANIFEST_PATH, "utf8"));
+  validateManifest(manifest);
+
+  const failures = [];
+  let skipped = 0;
+  let downloaded = 0;
+
+  const tasks = manifest.assets.map((asset) => async () => {
+    const outputPath = toFsPath(asset.localPath);
+
+    // Incremental sync: skip if local file exists with matching hash.
+    if (asset.sha256) {
+      try {
+        const cachedBytes = await readFile(outputPath);
+        const cachedHash = sha256(cachedBytes);
+        if (cachedHash === asset.sha256) {
+          skipped += 1;
+          return;
+        }
+      } catch {
+        // File doesn't exist, proceed to download.
+      }
+    }
+
+    try {
+      const result = await fetchWithRetry(asset.sourceUrl, {
+        userAgent: "strict-mirror-download/1.0",
+      });
+
+      if (result.ok) {
+        asset.status = result.status;
+        asset.contentType = "";
+        asset.bytes = result.buffer.length;
+        asset.sha256 = sha256(result.buffer);
+
+        await mkdir(dirname(outputPath), { recursive: true });
+        await writeFile(outputPath, result.buffer);
+        downloaded += 1;
+        return;
+      }
+
+      // Fallback: use cached local file if remote is unavailable.
+      try {
+        const cachedBytes = await readFile(outputPath);
+        asset.status = 200;
+        asset.contentType = asset.contentType || "application/octet-stream";
+        asset.bytes = cachedBytes.length;
+        asset.sha256 = sha256(cachedBytes);
+        log.warn("Using cached local file", { url: asset.sourceUrl });
+      } catch {
+        asset.status = 0;
+        asset.sha256 = "";
+        asset.bytes = 0;
+        failures.push(`${asset.sourceUrl} -> ${result.status}`);
+      }
+    } catch (error) {
+      // Fallback: use cached local file if fetch threw.
+      try {
+        const cachedBytes = await readFile(outputPath);
+        asset.status = 200;
+        asset.contentType = asset.contentType || "application/octet-stream";
+        asset.bytes = cachedBytes.length;
+        asset.sha256 = sha256(cachedBytes);
+        log.warn("Using cached local file after error", { url: asset.sourceUrl });
+      } catch {
+        asset.status = 0;
+        asset.contentType = "";
+        asset.sha256 = "";
+        asset.bytes = 0;
+        failures.push(`${asset.sourceUrl} -> ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  });
+
+  await runWithConcurrency(tasks, config.download.concurrency);
+  await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+  log.info("Download complete", { downloaded, skipped, failed: failures.length, total: manifest.assets.length });
+  log.timing("download-assets", startMs);
+
+  if (failures.length > 0) {
+    for (const failure of failures) {
+      log.error("Download failed", { detail: failure });
+    }
+    throw new Error(`Download failed for ${failures.length} assets`);
+  }
+};
+
+main().catch((error) => {
+  log.error("Fatal error", { error: error.message });
+  process.exit(1);
+});
