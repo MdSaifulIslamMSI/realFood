@@ -1,0 +1,1 @@
+const fs = require('fs'); const cheerio = require('cheerio'); const html = fs.readFileSync('artifacts/mirror/source-index.html', 'utf8'); const $ = cheerio.load(html); const srcs = []; [srcset], [imagesrcset].each((i, el) = srcs.push(.attr('srcset') 

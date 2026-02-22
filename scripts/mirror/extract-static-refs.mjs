@@ -35,7 +35,7 @@ const extractFromHtml = (html) => {
   });
 
   // 3. Autonomously discover deep-hidden Next.js dynamic assets by brute-forcing the raw text stream
-  const rawRelMatches = html.match(/(\/(?:images|video|_next|cdn-cgi)\/[a-zA-Z0-9_./-]+\.(?:png|jpeg|jpg|webp|gif|svg|mp4|webm|pdf|vtt))/gi);
+  const rawRelMatches = html.match(/(\/(?:images|video|_next|cdn-cgi)\/[a-zA-Z0-9_./=,%-]+\.(?:png|jpeg|jpg|webp|gif|svg|mp4|webm|pdf|vtt))/gi);
   if (rawRelMatches) {
     rawRelMatches.forEach(m => refs.push(m.startsWith('http') ? m : (m.startsWith('/') ? m : `/${m}`)));
   }
