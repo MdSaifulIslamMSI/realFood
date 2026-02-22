@@ -13,7 +13,7 @@
     "mirror:build:download": "node scripts/mirror/download-assets.mjs",
     "mirror:build:sanitize": "node scripts/mirror/sanitize-third-party.mjs",
     "mirror:build:rewrite": "node scripts/mirror/rewrite-html.mjs",
-    "mirror:build": "npm run mirror:build:manifest && npm run mirror:build:download && npm run mirror:build:rewrite",
+    "mirror:build": "npm run mirror:build:manifest && npm run mirror:build:download && npm run mirror:build:sanitize && npm run mirror:build:rewrite",
     "mirror:refresh": "npm run mirror:capture && npm run mirror:build",
     "mirror:serve": "node scripts/mirror/serve-mirror.mjs --port 4173",
     "mirror:verify:bytes": "node scripts/mirror/verify-byte-parity.mjs",
@@ -24,8 +24,15 @@
     "parity:compare": "node scripts/compare-parity.mjs",
     "test:parity": "npm run parity:capture && npm run parity:compare",
     "test:e2e": "playwright test",
+    "smoke:deploy": "node scripts/mirror/smoke-deploy.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "policy:check": "node scripts/ci/check-security-policy.mjs",
+    "check:tracked-generated": "node scripts/ci/check-tracked-generated.mjs",
+    "audit:deps": "npm audit --json --audit-level=high",
+    "ci:audit-report": "node scripts/ci/audit-gates.mjs",
+    "ci:local": "npm run typecheck && npm run test:unit && npm run policy:check && npm run check:tracked-generated && npm run audit:deps",
     "test:unit": "vitest run",
-    "test": "vitest run"
+    "test": "npm run test:unit"
   },
   "dependencies": {
     "htmlparser2": "^9.1.0"

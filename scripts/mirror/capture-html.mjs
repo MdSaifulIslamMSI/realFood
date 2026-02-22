@@ -10,13 +10,24 @@ import { createLogger, sha256 } from "./lib/utils.mjs";
 const log = createLogger("capture-html");
 
 const SOURCE_URL = `${config.sourceOrigin}/`;
-const PINNED_CAPTURED_AT = "2026-02-21T19:16:49.621Z";
 const OUTPUT_DIR = new URL("../../artifacts/mirror/", import.meta.url);
 const HTML_PATH = new URL("../../artifacts/mirror/source-index.html", import.meta.url);
 const META_PATH = new URL("../../artifacts/mirror/capture-meta.json", import.meta.url);
 
+const parseSnapshotTag = () => {
+  const index = process.argv.indexOf("--snapshot-tag");
+  if (index < 0) return null;
+
+  const value = (process.argv[index + 1] ?? "").trim();
+  if (!value) {
+    throw new Error("--snapshot-tag requires a non-empty value");
+  }
+  return value;
+};
+
 const main = async () => {
   const startMs = Date.now();
+  const snapshotTag = parseSnapshotTag();
   await mkdir(OUTPUT_DIR, { recursive: true });
 
   const response = await fetch(SOURCE_URL, {
@@ -31,30 +42,30 @@ const main = async () => {
   }
 
   const html = await response.text();
-  const observedAt = new Date().toISOString();
+  const capturedAt = new Date().toISOString();
   const hash = sha256(html);
 
   await writeFile(HTML_PATH, html, "utf8");
+  const meta = {
+    sourceOrigin: config.sourceOrigin,
+    entryUrl: "/",
+    capturedAt,
+    htmlSha256: hash,
+    status: response.status,
+  };
+  if (snapshotTag) {
+    meta.snapshotTag = snapshotTag;
+  }
+
   await writeFile(
     META_PATH,
-    `${JSON.stringify(
-      {
-        sourceOrigin: config.sourceOrigin,
-        entryUrl: "/",
-        capturedAt: PINNED_CAPTURED_AT,
-        observedAt,
-        htmlSha256: hash,
-        status: response.status,
-      },
-      null,
-      2,
-    )}\n`,
+    `${JSON.stringify(meta, null, 2)}\n`,
     "utf8",
   );
 
   log.info("Captured source HTML", {
-    pinnedAt: PINNED_CAPTURED_AT,
-    observedAt,
+    capturedAt,
+    snapshotTag: snapshotTag ?? "",
     htmlLength: html.length,
   });
   log.timing("capture-html", startMs);

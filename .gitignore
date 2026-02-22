@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
 
 # next.js
 /.next/
@@ -19,6 +21,7 @@
 
 # production
 /build
+/artifacts
 
 # misc
 .DS_Store

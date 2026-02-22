@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * verify-all – Orchestrates all verification gates in sequence.
- * Starts the mirror server, then runs byte parity, DOM parity, network gate, and visual parity.
+ * verify-all - Orchestrates all verification gates.
+ * Starts the mirror server, runs core gates in parallel, then performs visual parity.
  */
 import { spawn } from "node:child_process";
 import config from "../../mirror.config.mjs";
@@ -28,7 +28,7 @@ const runNode = (scriptPath, env = {}) =>
     });
   });
 
-const waitForServer = async (url, timeoutMs = 45000) => {
+const waitForServer = async (url, timeoutMs = 45_000) => {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -57,9 +57,11 @@ const main = async () => {
     await waitForServer(CLONE_URL);
     log.info("Mirror server ready", { url: CLONE_URL });
 
-    await runNode("scripts/mirror/verify-byte-parity.mjs");
-    await runNode("scripts/mirror/verify-dom-parity.mjs");
-    await runNode("scripts/mirror/verify-network-gate.mjs", { CLONE_URL });
+    await Promise.all([
+      runNode("scripts/mirror/verify-byte-parity.mjs"),
+      runNode("scripts/mirror/verify-dom-parity.mjs"),
+      runNode("scripts/mirror/verify-network-gate.mjs", { CLONE_URL }),
+    ]);
 
     await runNode("scripts/capture-parity.mjs", { CLONE_URL });
     await runNode("scripts/compare-parity.mjs");

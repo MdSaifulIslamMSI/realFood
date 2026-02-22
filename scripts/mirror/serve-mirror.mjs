@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 /**
- * serve-mirror – Static file server for the mirrored site.
+ * serve-mirror - Local static file server for mirror development and local checks.
  *
- * Security features:
- * - Nonce-based CSP (no unsafe-inline/unsafe-eval)
- * - realpath-based path traversal protection
- * - Token-bucket rate limiting per IP
- * - Strict security headers (nosniff, X-Frame-Options)
+ * Production is served via Vercel static hosting. This server exists for local
+ * parity checks and offline validation only.
  */
 import { createReadStream } from "node:fs";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import http from "node:http";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, isAbsolute, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "../../mirror.config.mjs";
 import { createLogger } from "./lib/utils.mjs";
 
 const log = createLogger("serve-mirror");
 const PUBLIC_ROOT = resolve(fileURLToPath(new URL("../../public/", import.meta.url)));
+const PUBLIC_ROOT_CANONICAL = await realpath(PUBLIC_ROOT);
 
 const getMimeType = (filePath) =>
   config.mimeTypes[extname(filePath).toLowerCase()] ?? "application/octet-stream";
@@ -51,14 +49,20 @@ setInterval(() => {
 /* ---------- Path resolution ---------- */
 const resolveFilePath = async (requestPathname) => {
   const pathname = requestPathname === "/" ? "/index.html" : requestPathname;
-  const decoded = decodeURIComponent(pathname);
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+
   const relativePath = decoded.replace(/^[/\\]+/, "");
   const candidate = normalize(join(PUBLIC_ROOT, relativePath));
 
-  // Use realpath to resolve symlinks and validate the canonical path is under PUBLIC_ROOT.
   try {
     const resolved = await realpath(candidate);
-    if (!resolved.startsWith(PUBLIC_ROOT)) {
+    const rel = relative(PUBLIC_ROOT_CANONICAL, resolved);
+    if (rel.startsWith("..") || isAbsolute(rel)) {
       return null;
     }
     return resolved;
@@ -70,22 +74,23 @@ const resolveFilePath = async (requestPathname) => {
 /* ---------- CSP ---------- */
 const buildCsp = (nonce) =>
   [
-    `default-src 'self' data: blob:`,
+    "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob:`,
-    `media-src 'self' blob:`,
-    `font-src 'self' data:`,
-    `connect-src 'self'`,
-    `frame-src 'none'`,
-    `object-src 'none'`,
-    `base-uri 'self'`,
+    "style-src 'self'",
+    "img-src 'self' data: blob:",
+    "media-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
   ].join("; ");
 
 /* ---------- HTML nonce injection ---------- */
 const injectNonce = async (filePath, nonce) => {
   let html = await readFile(filePath, "utf8");
-  // Add nonce to all <script> tags that don't already have one.
   html = html.replace(/<script(?![^>]*\bnonce=)/gi, `<script nonce="${nonce}"`);
   return html;
 };
@@ -100,9 +105,11 @@ const sendFile = async (req, res, filePath, nonce) => {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
   };
 
-  // Serve HTML with nonce injection.
   if (filePath.endsWith(".html") || filePath.endsWith(".htm")) {
     const html = await injectNonce(filePath, nonce);
     const body = Buffer.from(html, "utf8");
@@ -116,7 +123,6 @@ const sendFile = async (req, res, filePath, nonce) => {
     return;
   }
 
-  // Range requests for video.
   const rangeHeader = req.headers.range;
   if (rangeHeader && mimeType.startsWith("video/")) {
     const match = /bytes=(\d*)-(\d*)/.exec(rangeHeader);
@@ -148,7 +154,6 @@ const sendFile = async (req, res, filePath, nonce) => {
     return;
   }
 
-  // Default static file response.
   res.writeHead(200, {
     "Content-Type": mimeType,
     "Content-Length": fileStat.size,
@@ -162,9 +167,11 @@ const sendFile = async (req, res, filePath, nonce) => {
 /* ---------- Server ---------- */
 const main = async () => {
   const portArgIndex = process.argv.indexOf("--port");
-  const port = portArgIndex >= 0 ? Number.parseInt(process.argv[portArgIndex + 1] ?? String(config.serve.port), 10) : config.serve.port;
+  const port =
+    portArgIndex >= 0
+      ? Number.parseInt(process.argv[portArgIndex + 1] ?? String(config.serve.port), 10)
+      : config.serve.port;
 
-  // Generate a per-start nonce for CSP.
   const nonce = randomBytes(16).toString("base64");
 
   const server = http.createServer(async (req, res) => {

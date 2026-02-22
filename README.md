@@ -1,8 +1,15 @@
 # realfood-mirror
 
-A strict offline mirror pipeline for [realfood.gov](https://realfood.gov). Captures the live site, downloads all first-party assets, rewrites HTML for offline serving, and verifies byte-level, DOM-level, and pixel-level parity.
+A strict offline mirror pipeline for [realfood.gov](https://realfood.gov).
 
-## Architecture
+## Runtime Model
+
+- Vercel deployment path is the production security source of truth.
+- `scripts/mirror/serve-mirror.mjs` is a local development utility for offline checks.
+- No `unsafe-eval` or `unsafe-inline` is allowed in deployed CSP.
+- Compatibility rewrites for `/e` and `/decide` are intentionally removed.
+
+## Pipeline
 
 ```mermaid
 graph LR
@@ -20,118 +27,41 @@ graph LR
     H --> L[Visual Parity Compare]
 ```
 
-### Pipeline Stages
-
-| Stage | Script | Purpose |
-|-------|--------|---------|
-| Capture | `capture-html.mjs` | Fetches raw HTML from the live site |
-| Capture | `capture-runtime-graph.mjs` | Records runtime network requests via Playwright |
-| Capture | `extract-static-refs.mjs` | Extracts asset URLs from HTML and CSS |
-| Build | `build-manifest.mjs` | Merges all discovered URLs into a unified manifest |
-| Build | `download-assets.mjs` | Downloads all assets (concurrent, with retry and incremental sync) |
-| Build | `sanitize-third-party.mjs` | Strips third-party host references from JS/CSS bundles |
-| Build | `rewrite-html.mjs` | Rewrites HTML for offline serving, injects network guard |
-| Serve | `serve-mirror.mjs` | Static file server with CSP, rate limiting, path traversal protection |
-| Verify | `verify-byte-parity.mjs` | SHA-256 comparison of local vs remote assets |
-| Verify | `verify-dom-parity.mjs` | Normalized DOM hash comparison |
-| Verify | `verify-network-gate.mjs` | Ensures zero disallowed external requests |
-| Verify | `capture-parity.mjs` + `compare-parity.mjs` | Pixel-level visual comparison |
-
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# If assets are already in public/ — serve immediately
-npm run serve
-
-# Full pipeline: capture → build → serve
-npm run mirror:refresh
-npm run serve
-```
-
 ## Commands
 
 | Command | Description |
-|---------|-------------|
-| `npm run serve` | Start the mirror server on port 4173 |
-| `npm run mirror:capture` | Capture HTML, runtime requests, and static refs from live site |
-| `npm run mirror:build` | Build manifest, download assets, and rewrite HTML |
+|---|---|
+| `npm run serve` | Start local mirror server |
 | `npm run mirror:refresh` | Full capture + build pipeline |
 | `npm run mirror:verify` | Run all verification gates |
-| `npm run test` | Run unit tests (Vitest) |
-| `npm run test:e2e` | Run E2E tests (Playwright) |
-| `npm run test:parity` | Run visual parity comparison |
-
-## Configuration
-
-All pipeline settings are centralized in [`mirror.config.mjs`](mirror.config.mjs):
-- Source origin and CDN origin
-- Blocked hosts list
-- Manual URL inclusions
-- Download concurrency and retry settings
-- Server port and rate limiting
-- Visual parity thresholds
+| `npm run test:unit` | Run unit tests |
+| `npm run test:e2e` | Run E2E tests (local default, deployed when `PREVIEW_URL` is set) |
+| `npm run policy:check` | Verify canonical policy against `vercel.json`, README, and inline script hashes |
+| `npm run check:tracked-generated` | Fail if generated artifact paths are tracked |
+| `npm run ci:audit-report` | Run quality gates and emit machine-readable report |
 
 ## Security Model
 
-The mirror server implements defense-in-depth:
+Deployed policy is defined in `security/policy.mjs` and enforced in CI:
 
-1. **Nonce-based CSP** — No `unsafe-eval` or `unsafe-inline` for scripts. A per-start nonce is injected into all `<script>` tags.
-2. **Network Guard** — Monkey-patches `fetch`, `XHR`, `sendBeacon`, `appendChild`, `insertBefore`, `setAttribute`, and `Worker` to block requests to disallowed hosts.
-3. **Path Traversal Protection** — Uses `realpath()` to resolve filesystem paths and validates they remain under the public root.
-4. **Rate Limiting** — Token-bucket per IP with configurable window and max requests.
-5. **Security Headers** — `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`.
+1. Strict CSP with explicit script hash allowlist and no unsafe script execution.
+2. No public privileged control-plane endpoint (`/api/cron` removed).
+3. No compatibility rewrites for legacy `/e` and `/decide` routes.
+4. Defense headers include `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and cross-origin isolation headers.
+5. `scripts/ci/check-security-policy.mjs` validates config, docs, and inline script hash coverage.
 
-## Testing
+## Testing and Enforcement
 
-```bash
-# Unit tests (utilities, schema validation, DOM normalization)
-npm run test
+- Unit tests include policy and contract checks under `tests/unit`.
+- E2E tests validate route minimization, security headers, and network blocking semantics.
+- CI blocks merges on typecheck, unit tests, policy checks, tracked artifact checks, dependency audit, and local/deployed E2E execution.
 
-# E2E tests (requires mirror server running)
-npm run test:e2e
+## Repository Hygiene
 
-# Full verification suite (starts server, runs all checks)
-npm run mirror:verify
-```
+Generated output paths are intentionally not tracked:
 
-## Project Structure
+- `artifacts/**`
+- `playwright-report/**`
+- `test-results/**`
 
-```
-├── mirror.config.mjs          # Centralized configuration
-├── vitest.config.ts            # Unit test configuration
-├── playwright.config.ts        # E2E test configuration
-├── scripts/
-│   ├── capture-parity.mjs      # Visual parity screenshot capture
-│   ├── compare-parity.mjs      # Pixel-level comparison
-│   └── mirror/
-│       ├── lib/
-│       │   ├── utils.mjs       # Shared utility functions
-│       │   └── schema.mjs      # JSON schema validation
-│       ├── capture-html.mjs
-│       ├── capture-runtime-graph.mjs
-│       ├── extract-static-refs.mjs
-│       ├── build-manifest.mjs
-│       ├── download-assets.mjs
-│       ├── sanitize-third-party.mjs
-│       ├── rewrite-html.mjs
-│       ├── serve-mirror.mjs
-│       ├── verify-all.mjs
-│       ├── verify-byte-parity.mjs
-│       ├── verify-dom-parity.mjs
-│       └── verify-network-gate.mjs
-├── tests/
-│   ├── e2e/clone.spec.ts       # Playwright E2E tests
-│   └── unit/
-│       ├── utils.test.mjs      # Utility function tests
-│       ├── schema.test.mjs     # Schema validation tests
-│       └── dom-parity.test.mjs # DOM normalization tests
-├── artifacts/                  # Pipeline intermediary artifacts
-│   └── mirror/                 # Manifest, reports, source HTML
-└── public/                     # Served static files
-    ├── index.html              # Rewritten mirror HTML
-    ├── stubs/                  # Network guard and noop stubs
-    └── ...                     # Downloaded assets
-```
+CI enforces this with `scripts/ci/check-tracked-generated.mjs`.

@@ -68,7 +68,7 @@ test("mirrored PDFs are locally served", async ({ page }) => {
   }
 });
 
-test("security headers are present", async ({ page }) => {
+test("security headers are present and strict", async ({ page }) => {
   const response = await page.goto("/");
   expect(response).not.toBeNull();
   const headers = response!.headers();
@@ -76,6 +76,17 @@ test("security headers are present", async ({ page }) => {
   expect(headers["x-content-type-options"]).toBe("nosniff");
   expect(headers["x-frame-options"]).toBe("DENY");
   expect(headers["referrer-policy"]).toBe("no-referrer");
+  expect(headers["permissions-policy"]).toBeDefined();
   expect(headers["content-security-policy"]).toBeDefined();
   expect(headers["content-security-policy"]).not.toContain("unsafe-eval");
+  expect(headers["content-security-policy"]).not.toContain("unsafe-inline");
+});
+
+test("legacy control and compatibility routes are unavailable", async ({ page }) => {
+  const routes = ["/api/cron", "/api/stub", "/e", "/e/", "/decide/"];
+
+  for (const route of routes) {
+    const response = await page.request.get(route);
+    expect(response.status(), `route ${route} should not be public`).toBeGreaterThanOrEqual(400);
+  }
 });
