@@ -145,6 +145,14 @@ const main = async () => {
     rewrites += 1;
   });
 
+  // Fix strict WAI-ARIA violations where aria-hidden elements are still theoretically focusable.
+  // Chrome natively blocks this and logs an accessibility error. We upgrade aria-hidden to inert.
+  $('button[aria-hidden="true"], a[aria-hidden="true"]').each((_, element) => {
+    $(element).removeAttr("aria-hidden");
+    $(element).attr("inert", "");
+    rewrites += 1;
+  });
+
   let nextHtml = $.html();
 
   // Strip dynamic font preloads injected via Next.js flight payload to prevent Chrome warnings
