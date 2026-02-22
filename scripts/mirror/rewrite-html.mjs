@@ -11,6 +11,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import config from "../../mirror.config.mjs";
 import { validateManifest } from "./lib/schema.mjs";
 import { createLogger, replaceAllLiteral } from "./lib/utils.mjs";
+import * as cheerio from "cheerio";
 
 const log = createLogger("rewrite-html");
 
@@ -38,29 +39,54 @@ const main = async () => {
     rewriteMap.set(asset.sourceUrl, asset.localPath);
   }
 
-  // Rewrite all source URLs to local paths.
+  const $ = cheerio.load(html);
+
+  // 1. Rewrite all source URLs to local paths gracefully
   let rewrites = 0;
+
+  // 2. Un-optimize Next.js images cleanly through AST attributes
+  $('img').each((i, el) => {
+    const src = $(el).attr('src');
+    if (src && src.includes('/_next/image?url=')) {
+      try {
+        const urlParam = new URL(src, 'http://localhost').searchParams.get('url');
+        if (urlParam) { $(el).attr('src', decodeURIComponent(urlParam)); rewrites++; }
+      } catch (e) { }
+    }
+
+    const srcset = $(el).attr('srcset');
+    if (srcset && srcset.includes('/_next/image?url=')) {
+      const newSrcset = srcset.split(',').map(part => {
+        const [url, size] = part.trim().split(' ');
+        if (url && url.includes('/_next/image?url=')) {
+          try {
+            const u = new URL(url, 'http://localhost').searchParams.get('url');
+            return u ? `${decodeURIComponent(u)} ${size}` : part;
+          } catch (e) { }
+        }
+        return part;
+      }).join(', ');
+      $(el).attr('srcset', newSrcset);
+      rewrites++;
+    }
+  });
+
+  // 3. Inject network guard via AST
+  if (!$('script[data-mirror-network-guard="true"]').length) {
+    $('head').prepend('<script src="/stubs/network-guard.js" data-mirror-network-guard="true"></script>');
+  }
+
+  // 4. Safe global literal replacement for deeply embedded nextjs JSON router data
+  let nextHtml = $.html();
   for (const [sourceUrl, localPath] of rewriteMap.entries()) {
-    const nextHtml = replaceAllLiteral(html, sourceUrl, localPath);
-    if (nextHtml !== html) {
+    const replaced = replaceAllLiteral(nextHtml, sourceUrl, localPath);
+    if (replaced !== nextHtml) {
       rewrites += 1;
-      html = nextHtml;
+      nextHtml = replaced;
     }
   }
 
-
-  // Rewrite Next.js optimized image URLs to direct static paths to prevent Vercel 404s
-  html = html.replace(/\/_next\/image\?url=([^&"'\s]+)[^"'\s]*/gi, (match, url) => {
-    return decodeURIComponent(url);
-  });
-
-  // Install network guard before app scripts execute.
-  if (!html.includes("data-mirror-network-guard")) {
-    html = html.replace(
-      "<head>",
-      '<head><script src="/stubs/network-guard.js" data-mirror-network-guard="true"></script>',
-    );
-  }
+  html = nextHtml;
 
   // Write stub scripts.
   await mkdir(new URL("../../public/stubs/", import.meta.url), { recursive: true });

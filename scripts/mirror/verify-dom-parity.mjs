@@ -12,6 +12,8 @@ const SOURCE_HTML_PATH = new URL("../../artifacts/mirror/source-index.html", imp
 const CLONE_HTML_PATH = new URL("../../public/index.html", import.meta.url);
 const OUTPUT_PATH = new URL("../../artifacts/mirror/dom-parity-report.json", import.meta.url);
 
+import * as cheerio from "cheerio";
+
 /**
  * Normalize HTML for comparison by stripping elements that are intentionally different
  * between source and mirror (third-party scripts, stubs, nonces, etc.).
@@ -38,6 +40,16 @@ export const normalizeHtml = (html) => {
   normalized = normalized.replace(/\sintegrity="[^"]*"/gi, "");
   normalized = normalized.replace(/\scrossorigin="[^"]*"/gi, "");
 
+  // Pass through Cheerio so the source baseline exactly matches the ast rewritten target
+  const $ = cheerio.load(normalized, null, false);
+  normalized = $.html();
+
+  // Normalize Cheerio HTML serialization differences explicitly not caught by load
+  normalized = normalized.replace(/charSet=/g, "charset=");
+  normalized = normalized.replace(/ \/>/g, ">");
+  normalized = normalized.replace(/\/>/g, ">");
+  normalized = normalized.replace(/&#x27;/g, "'");
+
   // Collapse whitespace.
   normalized = normalized.replace(/>\s+</g, "><");
   normalized = normalized.replace(/\s+/g, " ");
@@ -45,7 +57,6 @@ export const normalizeHtml = (html) => {
 
   return normalized;
 };
-
 const findFirstDiff = (a, b) => {
   const max = Math.min(a.length, b.length);
   for (let i = 0; i < max; i += 1) {
@@ -92,7 +103,9 @@ const main = async () => {
   log.timing("verify-dom-parity", startMs);
 };
 
-main().catch((error) => {
-  log.error("Fatal error", { error: error.message });
-  process.exit(1);
-});
+if (process.argv[1] && process.argv[1].endsWith('verify-dom-parity.mjs')) {
+  main().catch((error) => {
+    log.error("Fatal error", { error: error.message });
+    process.exit(1);
+  });
+}

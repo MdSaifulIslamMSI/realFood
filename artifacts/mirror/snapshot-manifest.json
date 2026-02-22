@@ -205,15 +205,6 @@
       "discoveredBy": "css"
     },
     {
-      "sourceUrl": "https://realfood.gov/android-chrome-192x192.png",
-      "localPath": "/android-chrome-192x192.png",
-      "contentType": "",
-      "status": 200,
-      "sha256": "13b5e031a0e78dafe648b125f28fda06daad499c751954164555af850858a1a3",
-      "bytes": 14319,
-      "discoveredBy": "manual"
-    },
-    {
       "sourceUrl": "https://realfood.gov/apple-touch-icon.png",
       "localPath": "/apple-touch-icon.png",
       "contentType": "",
@@ -5890,7 +5881,7 @@
       "status": 200,
       "sha256": "d742b5046dbbcb7bc0f70882f3ac3fcf39f58a1e55fae0dc5ce8dc065c7e27c1",
       "bytes": 59122,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/covers/1.webp",
@@ -5899,7 +5890,7 @@
       "status": 200,
       "sha256": "913c9e7114ec790fc99f80edc3de12f8ad563a7a1041fb74cd50de9e9e4a5524",
       "bytes": 100316,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/covers/2.webp",
@@ -5908,7 +5899,7 @@
       "status": 200,
       "sha256": "e9f5442a2ddaec52c55c9045eec0c6f040938badf682c1027fcbc457f9b48c23",
       "bytes": 89808,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/covers/3.webp",
@@ -5917,7 +5908,7 @@
       "status": 200,
       "sha256": "45763715b2321d436c6248ffca66824c68a2957c86abb229bbb9d317f9c7347d",
       "bytes": 64920,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/covers/4.webp",
@@ -5926,7 +5917,7 @@
       "status": 200,
       "sha256": "c458bd06daec520db5cf31806aa5cb34e4388d408c1163aeb519a163381b72ad",
       "bytes": 571332,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/intro/broccoli.webp",
@@ -5935,7 +5926,7 @@
       "status": 200,
       "sha256": "e4c7631d7ac3fb95e0046ef136943ba04185077616456fb15453190abea51e3c",
       "bytes": 62048,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/intro/steak.webp",
@@ -5944,7 +5935,7 @@
       "status": 200,
       "sha256": "6817692f06829c9c396efd48676bfff82b0140ebec23f840952d56f0c1b75aec",
       "bytes": 32898,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/almond.webp",
@@ -5953,7 +5944,7 @@
       "status": 200,
       "sha256": "68e2c6bfec3bff8a4484ecd6f58840c3ba6bce4fb396604171d3fee9a7ed3985",
       "bytes": 8902,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/apples.webp",
@@ -5971,7 +5962,7 @@
       "status": 200,
       "sha256": "24d3ca910360d8a56292949b2bf431a6978f268279b3add550dc07600a060833",
       "bytes": 32108,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/bananas.webp",
@@ -5980,7 +5971,7 @@
       "status": 200,
       "sha256": "b1a8b1e9d8e8a76b8f71ef6496f3a651bb208bc88b5d41c4bf994a049d0b0004",
       "bytes": 30646,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/blueberries.webp",
@@ -5989,7 +5980,7 @@
       "status": 200,
       "sha256": "8126741a2315fa4e72594270d77de52739090562571cbfbf6f0c5fe1daa1817b",
       "bytes": 13586,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/blueberry.webp",
@@ -5998,7 +5989,7 @@
       "status": 200,
       "sha256": "6843f9fc12f2fa73b5f5fbf0e6a0d230a6b2ee25d11edf9693f19c1f7bb2441b",
       "bytes": 7184,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/bowl-oats.webp",
@@ -6007,7 +5998,7 @@
       "status": 200,
       "sha256": "4b0dd2810b25741ee6eb0b0a05f76eb60dc840c7302f404d684d98a80dc838ed",
       "bytes": 27180,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/bowl-rice-beans.webp",
@@ -6016,7 +6007,7 @@
       "status": 200,
       "sha256": "dfb32ec5cf74bf7ec9c83243984a9f16adaa75086ed5facef0f08d6650b51095",
       "bytes": 44478,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/bread.webp",
@@ -6034,7 +6025,7 @@
       "status": 200,
       "sha256": "a4f4c96ebb99b628e8766eab4fac3c44e2f77443360da5c76033fef29b18faf7",
       "bytes": 55592,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/butter.webp",
@@ -6052,7 +6043,7 @@
       "status": 200,
       "sha256": "d6e20276b618e0595255287597bf0bb17f6f04642abb46264ac235beef800ca9",
       "bytes": 124318,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/canned-tuna.webp",
@@ -6061,7 +6052,7 @@
       "status": 200,
       "sha256": "e5b0adf41b088cda82a24546bf24f706552257c29508d8a67ee5228a277e26c8",
       "bytes": 35152,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/carrots.webp",
@@ -6070,7 +6061,7 @@
       "status": 200,
       "sha256": "efb3d8b10c2233941dc6e77d5488ab51eb6719292bd32a743923cc90ca508712",
       "bytes": 55742,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/cheese.webp",
@@ -6097,7 +6088,7 @@
       "status": 200,
       "sha256": "2391ec8c6b7a384a3d6e38d755a6633cdf77d207fd1e82530c900f62c2783222",
       "bytes": 38990,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/eggs.webp",
@@ -6106,7 +6097,7 @@
       "status": 200,
       "sha256": "3b856b617c68946b3e7530a4e3b1d4a690726f056d6840a9fa2398c0570b3081",
       "bytes": 29190,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/frozen-peas.webp",
@@ -6115,7 +6106,7 @@
       "status": 200,
       "sha256": "e2fc9f6b1335215e1ee5c392502c0447c4eb8101c5410a7f942f44bac3111745",
       "bytes": 30482,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/grapes.webp",
@@ -6124,7 +6115,7 @@
       "status": 200,
       "sha256": "f87eb77896b6625fce01e852ae77d606ba806e0a43f75382bf93d64a1f8dc040",
       "bytes": 42446,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/green-beans.webp",
@@ -6133,7 +6124,7 @@
       "status": 200,
       "sha256": "27d3fa219548a48a8fa568c5f643f51b0b315b2b9573434229d6159f8f83dbf6",
       "bytes": 46082,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/ground-beef.webp",
@@ -6142,7 +6133,7 @@
       "status": 200,
       "sha256": "5af057a3f94bcefd86b033674eee63128b407b85a460c8d7eeaecd3728499735",
       "bytes": 66232,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/lettuce.webp",
@@ -6160,7 +6151,7 @@
       "status": 200,
       "sha256": "ca5023554c0fb972804eeba796a07ba6dc8e3e7d9e672eee1b2c79364c1f5463",
       "bytes": 28332,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/oats.webp",
@@ -6169,7 +6160,7 @@
       "status": 200,
       "sha256": "fbbb30502e162f9a9eb889ec31ecf32b3a0e943f6146ce94856b99e791114c2e",
       "bytes": 44476,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/olive-oil.webp",
@@ -6178,7 +6169,7 @@
       "status": 200,
       "sha256": "809a40fbac1d8d5b26038e8f2c510a3c6d70b33a8d32feb327d201dcbb262adc",
       "bytes": 34282,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/oranges.webp",
@@ -6187,7 +6178,7 @@
       "status": 200,
       "sha256": "9f906ebb7b14f13aa53dda0ff6e35a128d29c866ecb26f7c56df955e4711e539",
       "bytes": 32998,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/peanuts.webp",
@@ -6196,7 +6187,7 @@
       "status": 200,
       "sha256": "b1560e10120b05524ef2850eb7ba487a2f25169c4589ba1a20272917c4d12ae6",
       "bytes": 17606,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/potato.webp",
@@ -6223,7 +6214,7 @@
       "status": 200,
       "sha256": "2549551f38d45ea7217123e9ca8d72e336b3d72aa5031f3af7435bf6674abf3c",
       "bytes": 30126,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/steak.webp",
@@ -6241,7 +6232,7 @@
       "status": 200,
       "sha256": "9a57080e25bab25e4f60da66980194d8b531fae226271a3f05625e902793f442",
       "bytes": 13264,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/strawberry.webp",
@@ -6250,7 +6241,7 @@
       "status": 200,
       "sha256": "e3f00bffc746e252faf53dd80a874a8d1ae338ba1ac2deebb50c8f2742f3a53b",
       "bytes": 14222,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/tomatoes.webp",
@@ -6259,7 +6250,7 @@
       "status": 200,
       "sha256": "a2d4f7ad1b4f65bef794012b45a7e7b0c123ffed171d206bcb2cb32b42720e5c",
       "bytes": 28878,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/walnut-kernel.webp",
@@ -6268,7 +6259,7 @@
       "status": 200,
       "sha256": "bf268fc21f885e82343a57b6e2e04584426873c977531d355972183c0a31cdc3",
       "bytes": 6428,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/walnut-shelled.webp",
@@ -6277,7 +6268,7 @@
       "status": 200,
       "sha256": "53a100f849ea01c1e0570bcd95c6fe8cc42fcad208c1016ced5c835870e15776",
       "bytes": 11974,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/pyramid/watermelon.webp",
@@ -6295,7 +6286,7 @@
       "status": 200,
       "sha256": "6520ca969aa3ea3874bcb2bc35e25c8722074597a724e3ecf773c93ed74f5551",
       "bytes": 23792,
-      "discoveredBy": "manual"
+      "discoveredBy": "html"
     },
     {
       "sourceUrl": "https://realfood.gov/images/video-placeholder.webp",

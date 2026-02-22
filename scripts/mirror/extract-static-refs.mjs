@@ -12,18 +12,45 @@ const log = createLogger("extract-static-refs");
 const HTML_PATH = new URL("../../artifacts/mirror/source-index.html", import.meta.url);
 const OUTPUT_PATH = new URL("../../artifacts/mirror/static-refs.json", import.meta.url);
 
+import * as cheerio from "cheerio";
+
 const extractFromHtml = (html) => {
-  const attrRefs = [
-    ...html.matchAll(/(?:href|src|poster)="([^"]+)"/gi),
-    ...html.matchAll(/(?:href|src|poster)='([^']+)'/gi),
-  ].flatMap((match) => expandComposite(match[1]));
+  const $ = cheerio.load(html);
+  const refs = [];
 
-  const srcsetRefs = [
-    ...html.matchAll(/(?:srcset|imageSrcSet)="([^"]+)"/gi),
-    ...html.matchAll(/(?:srcset|imageSrcSet)='([^']+)'/gi),
-  ].flatMap((match) => expandComposite(match[1]));
+  // 1. Parse standard component attributes via AST
+  $('[src], [href], [poster]').each((_, el) => {
+    ['src', 'href', 'poster'].forEach(attr => {
+      const val = $(el).attr(attr);
+      if (val) refs.push(...expandComposite(val));
+    });
+  });
 
-  return unique([...attrRefs, ...srcsetRefs]).map(toAbsoluteUrl);
+  // 2. Parse srcset arrays
+  $('[srcset], [imagesrcset]').each((_, el) => {
+    ['srcset', 'imagesrcset'].forEach(attr => {
+      const val = $(el).attr(attr);
+      if (val) refs.push(...expandComposite(val));
+    });
+  });
+
+  // 3. Autonomously discover deep-hidden Next.js dynamic assets by brute-forcing the raw text stream
+  const rawRelMatches = html.match(/(\/(?:images|video|_next|cdn-cgi)\/[a-zA-Z0-9_./-]+\.(?:png|jpeg|jpg|webp|gif|svg|mp4|webm|pdf|vtt))/gi);
+  if (rawRelMatches) {
+    rawRelMatches.forEach(m => refs.push(m.startsWith('http') ? m : (m.startsWith('/') ? m : `/${m}`)));
+  }
+
+  const rawNextImgMatches = html.match(/\/_next\/image\?url=[^"'\s&#\\]+(?:&amp;w=\d+&amp;q=\d+)?/gi);
+  if (rawNextImgMatches) {
+    rawNextImgMatches.forEach(m => {
+      try {
+        const decodedUrl = new URL(m.replace(/&amp;/g, '&'), 'http://localhost').searchParams.get('url');
+        if (decodedUrl) refs.push(decodeURIComponent(decodedUrl));
+      } catch (e) { }
+    });
+  }
+
+  return unique(refs).map(toAbsoluteUrl);
 };
 
 const extractCssLinks = (htmlRefs) =>

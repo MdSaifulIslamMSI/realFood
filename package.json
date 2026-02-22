@@ -34,9 +34,10 @@
     "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.58.2",
     "@types/node": "^20",
+    "cheerio": "^1.2.0",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
     "typescript": "^5",
-    "vitest": "^3.0.0"
+    "vitest": "^3.2.4"
   }
 }
