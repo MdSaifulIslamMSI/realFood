@@ -39,5 +39,23 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/stubs/:filename(.*)\\.js\\.compression=.*",
+      "destination": "/stubs/:filename.js"
+    },
+    {
+      "source": "/e/",
+      "destination": "/api/stub"
+    },
+    {
+      "source": "/e",
+      "destination": "/api/stub"
+    },
+    {
+      "source": "/decide/",
+      "destination": "/api/stub"
+    }
   ]
 }
