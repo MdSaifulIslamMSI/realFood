@@ -76,6 +76,53 @@ const main = async () => {
     $('head').prepend('<script src="/stubs/network-guard.js" data-mirror-network-guard="true"></script>');
   }
 
+  // 3a-fix. Inject mobile CSS overrides for frozen Next.js animation elements
+  if (!$('style[data-mirror-mobile-fix]').length) {
+    $('head').append(`<style data-mirror-mobile-fix>
+/* Fix frozen Next.js animation overlays that block mobile clicks */
+@media (max-width: 768px) {
+  /* Food pyramid cards: reset pointer-events so they don't block content */
+  .dga_food__suy27 {
+    pointer-events: none !important;
+    position: static !important;
+    z-index: auto !important;
+  }
+  /* Document card previews: stack normally instead of overlapping */
+  .dga_doc__hDXIn {
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+  /* Ensure download text links are always clickable */
+  a[href*="cdn.realfood"], a[href*="/assets/mirror/"] {
+    position: relative !important;
+    z-index: 100 !important;
+    pointer-events: auto !important;
+  }
+  /* Fix frozen tooltip overlays */
+  .dga_pt_tooltips__CaEru {
+    pointer-events: none !important;
+  }
+  /* Fix video overlay */
+  .video-player-modal_mobileFullscreenVideo__BkqWo {
+    pointer-events: none !important;
+  }
+  /* Mobile nav should not block page content */
+  .mobile-nav_nav__DOtPw {
+    pointer-events: none !important;
+  }
+  .mobile-nav_nav__DOtPw * {
+    pointer-events: auto !important;
+  }
+  /* Reset all frozen transforms on interactive elements */
+  [style*="translateY"] {
+    transform: none !important;
+  }
+}
+</style>`);
+  }
+
   // 3b. Strip third-party script/link tags that would fire before the network guard
   const blockedPatterns = config.blockedHosts.map(h => h.replace(/\./g, '\\.'));
   const blockedRegex = new RegExp(`https?://(?:${blockedPatterns.join('|')})`, 'i');
