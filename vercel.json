@@ -42,7 +42,7 @@
   ],
   "rewrites": [
     {
-      "source": "/stubs/:filename(.*)\\.js\\.compression=.*",
+      "source": "/stubs/:filename.js.compression=:type",
       "destination": "/stubs/:filename.js"
     },
     {
