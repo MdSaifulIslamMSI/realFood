@@ -1,6 +1,17 @@
 {
     "buildCommand": "npm install && node scripts/automated-refresh.js",
     "outputDirectory": "public",
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "Content-Security-Policy",
+                    "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data:; connect-src 'self' data:; img-src 'self' data:; media-src 'self' data:; font-src 'self' data:; frame-src 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;"
+                }
+            ]
+        }
+    ],
     "crons": [
         {
             "path": "/api/cron",

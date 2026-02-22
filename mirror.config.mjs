@@ -56,14 +56,14 @@ const config = {
 
     /** Replacement pairs for sanitizing third-party references in JS/CSS bundles. */
     sanitizeReplacements: [
-        ["https://us-assets.i.posthog.com", "/stubs/noop-third-party.js"],
-        ["https://us.i.posthog.com", "/stubs/noop-third-party.js"],
-        ["https://challenges.cloudflare.com", "/stubs/noop-third-party.js"],
-        ["https://static.cloudflareinsights.com", "/stubs/noop-third-party.js"],
-        ["https:\\/\\/us-assets.i.posthog.com", "\\/stubs\\/noop-third-party.js"],
-        ["https:\\/\\/us.i.posthog.com", "\\/stubs\\/noop-third-party.js"],
-        ["https:\\/\\/challenges.cloudflare.com", "\\/stubs\\/noop-third-party.js"],
-        ["https:\\/\\/static.cloudflareinsights.com", "\\/stubs\\/noop-third-party.js"],
+        ["https://us-assets.i.posthog.com", "/stubs/noop-third-party.js?"],
+        ["https://us.i.posthog.com", "/stubs/noop-third-party.js?"],
+        ["https://challenges.cloudflare.com", "/stubs/noop-third-party.js?"],
+        ["https://static.cloudflareinsights.com", "/stubs/noop-third-party.js?"],
+        ["https:\\/\\/us-assets.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
+        ["https:\\/\\/us.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
+        ["https:\\/\\/challenges.cloudflare.com", "\\/stubs\\/noop-third-party.js?"],
+        ["https:\\/\\/static.cloudflareinsights.com", "\\/stubs\\/noop-third-party.js?"],
     ],
 
     /** Mirror server settings. */

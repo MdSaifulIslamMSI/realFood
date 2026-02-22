@@ -48,25 +48,7 @@ const main = async () => {
     }
   }
 
-  // Remove bare origin references.
-  html = replaceAllLiteral(html, config.sourceOrigin, "");
 
-  // Remove preload links for third-party scripts.
-  html = html.replace(
-    /<link[^>]+rel="preload"[^>]+href="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com)[^>]*>/gi,
-    "",
-  );
-
-  // Replace third-party script tags with local no-op stubs.
-  html = html.replace(
-    /<script[^>]+src="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com|us\.i\.posthog\.com)[^>]*><\/script>/gi,
-    '<script src="/stubs/noop-third-party.js" data-mirror-stub="true"></script>',
-  );
-
-  // Replace remaining third-party URL literals inside inline scripts.
-  for (const pattern of config.thirdPartyPatterns) {
-    html = html.replace(pattern, "/stubs/noop-third-party.js");
-  }
 
   // Install network guard before app scripts execute.
   if (!html.includes("data-mirror-network-guard")) {
