@@ -1,13 +1,13 @@
 /* strict mirror network guard */
 (function () {
-  var BLOCKED = ["realfood.gov", "cdn.realfood.gov", "challenges.cloudflare.com", "static.cloudflareinsights.com", "us-assets.i.posthog.com", "us.i.posthog.com"];
+  var BLOCKED = ["realfood.gov","cdn.realfood.gov","challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
 
   function emitBlocked(reason, url, extra) {
     var detail = {
       reason: reason,
       url: url || "",
       extra: extra || {},
-      timestamp: Date.now(),
+      timestamp: Date.now()
     };
 
     try {
@@ -30,9 +30,7 @@
     try {
       return new URL(String(value), window.location.href);
     } catch (error) {
-      emitBlocked("invalid-url", String(value), {
-        message: error && error.message ? error.message : String(error),
-      });
+      emitBlocked("invalid-url", String(value), { message: error && error.message ? error.message : String(error) });
       return null;
     }
   }

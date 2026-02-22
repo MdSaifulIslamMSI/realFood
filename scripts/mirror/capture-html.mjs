@@ -3,7 +3,7 @@
  * capture-html – Captures the source HTML from the target site.
  * Stores the raw HTML and capture metadata for downstream pipeline stages.
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, rename } from "node:fs/promises";
 import config from "../../mirror.config.mjs";
 import { createLogger, sha256 } from "./lib/utils.mjs";
 
@@ -45,7 +45,9 @@ const main = async () => {
   const capturedAt = new Date().toISOString();
   const hash = sha256(html);
 
-  await writeFile(HTML_PATH, html, "utf8");
+  const tmpHtmlPath = new URL(HTML_PATH.href + ".tmp");
+  await writeFile(tmpHtmlPath, html, "utf8");
+  await rename(tmpHtmlPath, HTML_PATH);
   const meta = {
     sourceOrigin: config.sourceOrigin,
     entryUrl: "/",
@@ -57,11 +59,13 @@ const main = async () => {
     meta.snapshotTag = snapshotTag;
   }
 
+  const tmpMetaPath = new URL(META_PATH.href + ".tmp");
   await writeFile(
-    META_PATH,
+    tmpMetaPath,
     `${JSON.stringify(meta, null, 2)}\n`,
     "utf8",
   );
+  await rename(tmpMetaPath, META_PATH);
 
   log.info("Captured source HTML", {
     capturedAt,

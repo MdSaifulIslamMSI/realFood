@@ -15,6 +15,7 @@ const commands = [
     'node scripts/mirror/build-manifest.mjs',
     'node scripts/mirror/download-assets.mjs',
     'node scripts/mirror/sanitize-third-party.mjs',
+    'node scripts/mirror/verify-sanity.mjs',
     'node scripts/mirror/rewrite-html.mjs'
 ];
 

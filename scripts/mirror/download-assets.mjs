@@ -3,7 +3,7 @@
  * download-assets – Downloads all assets listed in the snapshot manifest.
  * Features: concurrent downloads, incremental sync (skip unchanged), retry with backoff.
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "../../mirror.config.mjs";
@@ -62,18 +62,23 @@ const main = async () => {
   const tasks = manifest.assets.map((asset) => async () => {
     const outputPath = toFsPath(asset.localPath);
 
-    // Incremental sync: skip if local file exists with matching hash.
-    if (asset.sha256) {
-      try {
-        const cachedBytes = await readFile(outputPath);
-        const cachedHash = sha256(cachedBytes);
-        if (cachedHash === asset.sha256) {
-          skipped += 1;
-          return;
+    // Delta sync: skip if local file exists and is not empty.
+    // Next.js assets are heavily cached with content-hashes in their URLs.
+    try {
+      const stats = await stat(outputPath);
+      if (stats.size > 0) {
+        // We have the file. Sync metadata if missing.
+        if (!asset.sha256 || !asset.bytes) {
+          const cachedBytes = await readFile(outputPath);
+          asset.sha256 = sha256(cachedBytes);
+          asset.bytes = cachedBytes.length;
+          asset.status = 200;
         }
-      } catch {
-        // File doesn't exist, proceed to download.
+        skipped += 1;
+        return;
       }
+    } catch {
+      // File doesn't exist, proceed to download.
     }
 
     try {
@@ -88,7 +93,9 @@ const main = async () => {
         asset.sha256 = sha256(result.buffer);
 
         await mkdir(dirname(outputPath), { recursive: true });
-        await writeFile(outputPath, result.buffer);
+        const tmpOutputPath = outputPath + ".tmp";
+        await writeFile(tmpOutputPath, result.buffer);
+        await rename(tmpOutputPath, outputPath);
         downloaded += 1;
         return;
       }
@@ -127,7 +134,9 @@ const main = async () => {
   });
 
   await runWithConcurrency(tasks, config.download.concurrency);
-  await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  const tmpManifestPath = new URL(MANIFEST_PATH.href + ".tmp");
+  await writeFile(tmpManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  await rename(tmpManifestPath, MANIFEST_PATH);
 
   log.info("Download complete", { downloaded, skipped, failed: failures.length, total: manifest.assets.length });
   log.timing("download-assets", startMs);

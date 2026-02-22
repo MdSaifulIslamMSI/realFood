@@ -3,7 +3,7 @@
  * build-manifest – Builds the snapshot manifest from captured data sources.
  * Merges HTML refs, CSS refs, runtime requests, and manual URLs into a unified asset list.
  */
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, rename } from "node:fs/promises";
 import config from "../../mirror.config.mjs";
 import { validateCaptureMeta, validateStaticRefs } from "./lib/schema.mjs";
 import {
@@ -35,8 +35,14 @@ const main = async () => {
   const staticRefs = JSON.parse(await readFile(STATIC_REFS_PATH, "utf8"));
   validateStaticRefs(staticRefs);
 
-  const runtimeRefs = JSON.parse(await readFile(RUNTIME_PATH, "utf8"));
-  if (!Array.isArray(runtimeRefs)) throw new TypeError("runtime-requests.json must be an array");
+  let runtimeRefs = [];
+  try {
+    runtimeRefs = JSON.parse(await readFile(RUNTIME_PATH, "utf8"));
+    if (!Array.isArray(runtimeRefs)) throw new TypeError("runtime-requests.json must be an array");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    log.warn("runtime-requests.json not found, substituting empty array");
+  }
 
   const captureMeta = JSON.parse(await readFile(META_PATH, "utf8"));
   validateCaptureMeta(captureMeta);
@@ -82,7 +88,9 @@ const main = async () => {
     htmlSha256: captureMeta.htmlSha256,
   };
 
-  await writeFile(OUTPUT_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  const tmpOutputPath = new URL(OUTPUT_PATH.href + ".tmp");
+  await writeFile(tmpOutputPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  await rename(tmpOutputPath, OUTPUT_PATH);
 
   log.info("Manifest built", { assetCount: assets.length });
   log.timing("build-manifest", startMs);

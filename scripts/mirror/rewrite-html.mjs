@@ -7,7 +7,7 @@
  * - Injects a network guard with explicit blocked-request failure semantics
  * - Emits deterministic stub files used by local/offline runs
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import config from "../../mirror.config.mjs";
 import { validateManifest } from "./lib/schema.mjs";
 import { createLogger, escapeRegex } from "./lib/utils.mjs";
@@ -370,14 +370,19 @@ const main = async () => {
     "utf8",
   );
 
-  await writeFile(OUTPUT_HTML_PATH, html, "utf8");
+  const tmpHtmlPath = new URL(OUTPUT_HTML_PATH.href + ".tmp");
+  await writeFile(tmpHtmlPath, html, "utf8");
+  await rename(tmpHtmlPath, OUTPUT_HTML_PATH);
 
   const report = {
     rewrittenAt: new Date().toISOString(),
     rewrittenUrlCount: rewrites,
     output: "/index.html",
   };
-  await writeFile(REWRITE_REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+  const tmpReportPath = new URL(REWRITE_REPORT_PATH.href + ".tmp");
+  await writeFile(tmpReportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await rename(tmpReportPath, REWRITE_REPORT_PATH);
 
   log.info("Rewrite complete", { rewrites });
   log.timing("rewrite-html", startMs);
