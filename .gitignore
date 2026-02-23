@@ -45,6 +45,9 @@ next-env.d.ts
 
 .vercel
 .env*.local
-playwright-report/ 
 
+# Generated test and pipeline artifacts — never commit
 playwright-report/
+test-results/
+artifacts/
+*.log
