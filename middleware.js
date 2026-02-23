@@ -8,10 +8,14 @@ export default function middleware(request) {
     // We intercept the request at the Edge before Vercel's static router even sees it.
 
     if (request.method === 'POST' || request.method === 'OPTIONS') {
+        const ALLOWED_ORIGINS = ['https://clone-smoky-xi.vercel.app'];
+        const origin = request.headers.get('Origin') || '';
+        const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : 'null';
+
         return new Response('', {
             status: 200,
             headers: {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': allowedOrigin,
                 'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
                 'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
             }

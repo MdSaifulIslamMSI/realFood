@@ -52,5 +52,18 @@ for (const route of vercelConfig.headers || []) {
 
 if (updated) {
     writeFileSync(vercelConfigPath, JSON.stringify(vercelConfig, null, 2) + "\n", "utf8");
+
+    // Safety check to ensure it was actually eliminated
+    const newConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
+    const route = newConfig.headers?.find(h => h.source === "/(.*)");
+    const newCsp = route?.headers.find(h => h.key === "Content-Security-Policy")?.value || "";
+    if (newCsp.includes("unsafe-inline")) {
+        console.error("ERROR: unsafe-inline is still present in vercel.json after update.");
+        process.exit(1);
+    }
+
     console.log(`Updated vercel.json CSP with ${inlineHashes.length} secure inline hashes. Eliminated unsafe-inline.`);
+} else {
+    console.error("ERROR: CSP script-src pattern not found in vercel.json. Update failed.");
+    process.exit(1);
 }
