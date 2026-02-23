@@ -51,3 +51,6 @@ playwright-report/
 test-results/
 artifacts/
 *.log
+
+.devserver.log
+.mirrorserver.log
