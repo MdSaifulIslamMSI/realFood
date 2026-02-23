@@ -35,7 +35,6 @@
     "test": "npm run test:unit"
   },
   "dependencies": {
-    "archiver": "^7.0.1",
     "htmlparser2": "^9.1.0"
   },
   "devDependencies": {
