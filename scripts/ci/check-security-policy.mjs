@@ -20,6 +20,7 @@ const deployedHeaders = vercelConfig.headers?.[0]?.headers ?? [];
 const deployedHeaderMap = new Map(deployedHeaders.map((header) => [header.key, header.value]));
 
 for (const expected of DEPLOY_HEADERS) {
+  if (expected.key === "Content-Security-Policy") continue;
   const actual = deployedHeaderMap.get(expected.key);
   if (actual !== expected.value) {
     issues.push(`Header mismatch for ${expected.key}.`);
@@ -27,12 +28,27 @@ for (const expected of DEPLOY_HEADERS) {
 }
 
 const csp = deployedHeaderMap.get("Content-Security-Policy") ?? "";
-if (csp !== DEPLOY_CSP) {
-  issues.push("Deployed CSP does not match canonical security policy.");
+const baseDeployedCsp = csp.replace(/ 'sha256-[^']+'/g, "");
+if (baseDeployedCsp !== DEPLOY_CSP) {
+  issues.push("Base deployed CSP (without hashes) does not match canonical security policy.");
 }
 if (csp.includes("unsafe-eval")) {
   issues.push("Deployed CSP must not include unsafe-eval.");
 }
+if (csp.includes("unsafe-inline")) {
+  issues.push("Deployed CSP must not include unsafe-inline.");
+}
+
+const $ = cheerio.load(html);
+$("script").each((_, el) => {
+  const script = $(el);
+  if (script.attr("src")) return;
+  const content = script.html() ?? "";
+  const hash = createHash("sha256").update(content, "utf8").digest("base64");
+  if (!csp.includes(`'sha256-${hash}'`)) {
+    issues.push(`Missing CSP hash for inline script: ${hash}`);
+  }
+});
 
 if (existsSync(new URL("../../api/cron.js", import.meta.url))) {
   issues.push("api/cron.js must not exist.");

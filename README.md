@@ -7,7 +7,7 @@ A strict offline mirror pipeline for [realfood.gov](https://realfood.gov).
 - Vercel deployment path is the production security source of truth.
 - `scripts/mirror/serve-mirror.mjs` is a local development utility for offline checks.
 - No `unsafe-eval` is allowed in deployed CSP.
-- Compatibility rewrites for `/e` and `/decide` are intentionally removed.
+- Telemetry routes `/e` and `/decide` are actively routed to the local stub interceptor.
 
 ## Pipeline
 
@@ -46,7 +46,7 @@ Deployed policy is defined in `security/policy.mjs` and enforced in CI:
 
 1. Strict CSP with explicit script hash allowlist and no unsafe-eval execution.
 2. No public privileged control-plane endpoint (`/api/cron` removed).
-3. No compatibility rewrites for legacy `/e` and `/decide` routes.
+3. Telemetry routes `/e` and `/decide` are actively routed to the local stub interceptor.
 4. Defense headers include `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and cross-origin isolation headers.
 5. `scripts/ci/check-security-policy.mjs` validates config, docs, and inline script hash coverage.
 

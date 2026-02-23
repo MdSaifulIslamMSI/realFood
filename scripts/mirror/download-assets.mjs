@@ -4,11 +4,11 @@
  * Features: concurrent downloads, incremental sync (skip unchanged), retry with backoff.
  */
 import { mkdir, readFile, writeFile, rename, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "../../mirror.config.mjs";
 import { validateManifest } from "./lib/schema.mjs";
-import { createLogger, delay, fetchWithRetry, sha256 } from "./lib/utils.mjs";
+import { createLogger, delay, fetchWithRetry, sha256, isFirstPartyHost } from "./lib/utils.mjs";
 
 const log = createLogger("download-assets");
 
@@ -25,7 +25,12 @@ const toFsPath = (localPath) => {
     .filter(Boolean)
     .map((segment) => decodeURIComponent(segment));
 
-  return join(PUBLIC_ROOT, ...segments);
+  const candidate = join(PUBLIC_ROOT, ...segments);
+  const rel = relative(PUBLIC_ROOT, candidate);
+  if (rel.startsWith("..") || isAbsolute(rel)) {
+    throw new Error(`Path traversal detected: ${localPath}`);
+  }
+  return candidate;
 };
 
 /**
@@ -82,6 +87,10 @@ const main = async () => {
     }
 
     try {
+      if (!isFirstPartyHost(new URL(asset.sourceUrl).hostname)) {
+        throw new Error(`Rejected non-first-party sourceUrl: ${asset.sourceUrl}`);
+      }
+
       const result = await fetchWithRetry(asset.sourceUrl, {
         userAgent: "strict-mirror-download/1.0",
       });

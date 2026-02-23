@@ -172,9 +172,8 @@ const main = async () => {
       ? Number.parseInt(process.argv[portArgIndex + 1] ?? String(config.serve.port), 10)
       : config.serve.port;
 
-  const nonce = randomBytes(16).toString("base64");
-
   const server = http.createServer(async (req, res) => {
+    const nonce = randomBytes(16).toString("base64");
     const clientIp = req.socket.remoteAddress ?? "unknown";
 
     if (isRateLimited(clientIp)) {
@@ -201,7 +200,7 @@ const main = async () => {
   });
 
   server.listen(port, config.serve.host, () => {
-    log.info("Server started", { port, host: config.serve.host, nonce: nonce.slice(0, 4) + "..." });
+    log.info("Server started", { port, host: config.serve.host });
   });
 };
 

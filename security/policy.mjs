@@ -7,8 +7,8 @@
 
 export const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self'",
+  "style-src 'self'",
   "img-src 'self' data: blob:",
   "media-src 'self' data: blob:",
   "font-src 'self' data:",
@@ -36,5 +36,5 @@ export const DEPLOY_HEADERS = [
 export const REQUIRED_README_CLAIMS = [
   "Vercel deployment path is the production security source of truth.",
   "No `unsafe-eval` is allowed in deployed CSP.",
-  "Compatibility rewrites for `/e` and `/decide` are intentionally removed.",
+  "Telemetry routes `/e` and `/decide` are actively routed to the local stub interceptor.",
 ];

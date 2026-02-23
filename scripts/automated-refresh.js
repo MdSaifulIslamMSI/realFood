@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,13 +10,14 @@ console.log(`Starting automated refresh pipeline in ${projectDir}`);
 
 // Sequence of commands to run the refresh pipeline
 const commands = [
-    'node scripts/mirror/capture-html.mjs',
-    'node scripts/mirror/extract-static-refs.mjs',
-    'node scripts/mirror/build-manifest.mjs',
-    'node scripts/mirror/download-assets.mjs',
-    'node scripts/mirror/sanitize-third-party.mjs',
-    'node scripts/mirror/verify-sanity.mjs',
-    'node scripts/mirror/rewrite-html.mjs'
+    ['node', 'scripts/mirror/capture-html.mjs'],
+    ['node', 'scripts/mirror/extract-static-refs.mjs'],
+    ['node', 'scripts/mirror/build-manifest.mjs'],
+    ['node', 'scripts/mirror/download-assets.mjs'],
+    ['node', 'scripts/mirror/sanitize-third-party.mjs'],
+    ['node', 'scripts/mirror/verify-sanity.mjs'],
+    ['node', 'scripts/mirror/rewrite-html.mjs'],
+    ['node', 'scripts/mirror/update-production-csp.mjs']
 ];
 
 function runCommand(index) {
@@ -25,25 +26,26 @@ function runCommand(index) {
         return;
     }
 
-    const cmd = commands[index];
-    console.log(`Running: ${cmd}`);
+    const [cmd, ...args] = commands[index];
+    const fullCmd = `${cmd} ${args.join(' ')}`;
+    console.log(`Running: ${fullCmd}`);
 
-    const child = exec(cmd, { cwd: projectDir });
+    const child = spawn(cmd, args, { cwd: projectDir });
 
     child.stdout.on('data', (data) => {
-        console.log(data.trim());
+        console.log(data.toString().trim());
     });
 
     child.stderr.on('data', (data) => {
-        console.error(data.trim());
+        console.error(data.toString().trim());
     });
 
     child.on('close', (code) => {
         if (code !== 0) {
-            console.error(`Command failed with exit code ${code}: ${cmd}`);
+            console.error(`Command failed with exit code ${code}: ${fullCmd}`);
             process.exit(1);
         } else {
-            console.log(`Command succeeded: ${cmd}`);
+            console.log(`Command succeeded: ${fullCmd}`);
             runCommand(index + 1);
         }
     });
