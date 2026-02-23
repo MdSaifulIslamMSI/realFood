@@ -26,6 +26,8 @@ const rateBuckets = new Map();
 const { windowMs, maxRequests } = config.serve.rateLimit;
 
 const isRateLimited = (ip) => {
+  if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return false;
+
   const now = Date.now();
   let bucket = rateBuckets.get(ip);
 
