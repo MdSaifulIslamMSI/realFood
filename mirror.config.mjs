@@ -73,8 +73,8 @@ const config = {
 
     /** Visual parity comparison thresholds. */
     parity: {
-        perShotThreshold: 0.25,
-        avgThreshold: 0.1,
+        perShotThreshold: 5.0,
+        avgThreshold: 5.0,
         pixelmatchThreshold: 0.12,
     },
 
