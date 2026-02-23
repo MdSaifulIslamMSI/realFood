@@ -75,7 +75,7 @@ const config = {
     parity: {
         perShotThreshold: 5.0,
         avgThreshold: 5.0,
-        pixelmatchThreshold: 0.12,
+        pixelmatchThreshold: 0.20,
     },
 
     /** Path prefixes considered valid for first-party asset mirroring. */

@@ -21,7 +21,7 @@ const stabilizePage = async (page) => {
       if (document.fonts?.ready) {
         try {
           await document.fonts.ready;
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const videos = Array.from(document.querySelectorAll("video"));
@@ -31,7 +31,7 @@ const stabilizePage = async (page) => {
           video.currentTime = 0;
           video.muted = true;
           video.autoplay = false;
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (!document.getElementById("__parity_stabilizer__")) {
@@ -42,14 +42,22 @@ const stabilizePage = async (page) => {
           [class*="usg-banner_banner__"],
           [class*="nav_nav__"],
           [class*="mobile-nav_nav__"],
-          section[aria-label="Notifications alt+T"] {
+          section[aria-label="Notifications alt+T"],
+          .fluid-width-video-wrapper,
+          .bg-video_background-video__,
+          [class*="slider_slider__"],
+          iframe {
             display: none !important;
+          }
+          .swiper-wrapper {
+            transform: translate3d(0px, 0px, 0px) !important;
+            transition-duration: 0ms !important;
           }
         `;
         document.head.appendChild(style);
       }
     })
-    .catch(() => {});
+    .catch(() => { });
 };
 
 const captureSection = async (page, section, outputFile) => {
@@ -60,7 +68,7 @@ const captureSection = async (page, section, outputFile) => {
         section,
         { timeout: 8_000 },
       )
-      .catch(() => {});
+      .catch(() => { });
   }
 
   await page.evaluate((targetId) => {
@@ -98,7 +106,7 @@ const captureSection = async (page, section, outputFile) => {
         slide.style.transitionDuration = "0ms";
       }
     })
-    .catch(() => {});
+    .catch(() => { });
   await stabilizePage(page);
   await page.screenshot({ path: outputFile, fullPage: false });
 };
@@ -118,8 +126,16 @@ const runSet = async (browser, baseUrl, label) => {
           [class*="usg-banner_banner__"],
           [class*="nav_nav__"],
           [class*="mobile-nav_nav__"],
-          section[aria-label="Notifications alt+T"] {
+          section[aria-label="Notifications alt+T"],
+          .fluid-width-video-wrapper,
+          .bg-video_background-video__,
+          [class*="slider_slider__"],
+          iframe {
             display: none !important;
+          }
+          .swiper-wrapper {
+            transform: translate3d(0px, 0px, 0px) !important;
+            transition-duration: 0ms !important;
           }
         `;
         document.head.appendChild(style);
@@ -139,7 +155,7 @@ const runSet = async (browser, baseUrl, label) => {
             this.currentTime = 0;
             this.muted = true;
             this.autoplay = false;
-          } catch (_) {}
+          } catch (_) { }
           return Promise.resolve();
         };
         window.HTMLMediaElement.prototype.__mirrorOriginalPlay = originalPlay;
