@@ -3,8 +3,9 @@ export default function handler(req, res) {
     const origin = req.headers.origin || '';
     const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : 'null';
 
-    // Allow all CORS origins for stub APIs to prevent CORS console errors.
+    // Reflect CORS only for explicitly allowed origins; all others receive 'null'.
     res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+    res.setHeader('Vary', 'Origin')
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST')
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version')
 

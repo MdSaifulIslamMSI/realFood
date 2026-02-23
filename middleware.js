@@ -16,6 +16,7 @@ export default function middleware(request) {
             status: 200,
             headers: {
                 'Access-Control-Allow-Origin': allowedOrigin,
+                'Vary': 'Origin',
                 'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
                 'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
             }
