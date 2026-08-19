@@ -1,4 +1,4 @@
-﻿name: Autonomous Upstream Sync & Verification
+name: Autonomous Upstream Sync & Verification
 
 on:
   schedule:
@@ -46,6 +46,12 @@ jobs:
             git add public/ vercel.json
             git commit -m "chore(mirror): autonomous upstream sync [skip ci]"
             git push
+            
+            if [[ -n "${{ secrets.SYNC_WEBHOOK_URL }}" ]]; then
+              curl -s -X POST -H "Content-Type: application/json" \
+                -d '{"content": "🚀 **realfood-mirror**: Fresh upstream release synchronized and verified successfully."}' \
+                "${{ secrets.SYNC_WEBHOOK_URL }}" || true
+            fi
           else
             echo "No upstream changes detected. Mirror is up to date."
           fi

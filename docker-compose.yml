@@ -1,0 +1,12 @@
+﻿services:
+  mirror:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: realfood-mirror:latest
+    container_name: realfood-mirror
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
