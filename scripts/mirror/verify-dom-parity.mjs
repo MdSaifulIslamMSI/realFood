@@ -4,7 +4,7 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import config from "../../mirror.config.mjs";
-import { createLogger, sha256 } from "./lib/utils.mjs";
+import { createLogger, normalizeHtml, sha256 } from "./lib/utils.mjs";
 
 const log = createLogger("verify-dom-parity");
 
@@ -12,51 +12,7 @@ const SOURCE_HTML_PATH = new URL("../../artifacts/mirror/source-index.html", imp
 const CLONE_HTML_PATH = new URL("../../public/index.html", import.meta.url);
 const OUTPUT_PATH = new URL("../../artifacts/mirror/dom-parity-report.json", import.meta.url);
 
-import * as cheerio from "cheerio";
-
-/**
- * Normalize HTML for comparison by stripping elements that are intentionally different
- * between source and mirror (third-party scripts, stubs, nonces, etc.).
- * @param {string} html
- * @returns {string}
- */
-export const normalizeHtml = (html) => {
-  let normalized = html;
-
-  // Remove third-party preload links and script tags.
-  normalized = normalized.replace(/<link[^>]+rel="preload"[^>]+href="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com)[^>]*>/gi, "");
-  normalized = normalized.replace(/<script[^>]+src="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com|us\.i\.posthog\.com)[^>]*><\/script>/gi, "");
-
-  // Remove mirror-specific stubs.
-  normalized = normalized.replace(/<script[^>]+src="\/stubs\/noop-third-party\.js"[^>]*><\/script>/gi, "");
-  normalized = normalized.replace(/<script[^>]+src="\/stubs\/network-guard\.js"[^>]*><\/script>/gi, "");
-
-  // Normalize origins.
-  normalized = normalized.replace(/https:\/\/realfood\.gov/gi, "");
-  normalized = normalized.replace(/https:\/\/cdn\.realfood\.gov/gi, "/assets/mirror/cdn.realfood.gov");
-
-  // Remove nonce, integrity, crossorigin attributes.
-  normalized = normalized.replace(/\snonce="[^"]*"/gi, "");
-  normalized = normalized.replace(/\sintegrity="[^"]*"/gi, "");
-  normalized = normalized.replace(/\scrossorigin="[^"]*"/gi, "");
-
-  // Pass through Cheerio so the source baseline exactly matches the ast rewritten target
-  const $ = cheerio.load(normalized, null, false);
-  normalized = $.html();
-
-  // Normalize Cheerio HTML serialization differences explicitly not caught by load
-  normalized = normalized.replace(/charSet=/g, "charset=");
-  normalized = normalized.replace(/ \/>/g, ">");
-  normalized = normalized.replace(/\/>/g, ">");
-  normalized = normalized.replace(/&#x27;/g, "'");
-
-  // Collapse whitespace.
-  normalized = normalized.replace(/>\s+</g, "><");
-  normalized = normalized.replace(/\s+/g, " ");
-  normalized = normalized.trim();
-
-  return normalized;
-};
+export { normalizeHtml };
 const findFirstDiff = (a, b) => {
   const max = Math.min(a.length, b.length);
   for (let i = 0; i < max; i += 1) {

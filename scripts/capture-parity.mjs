@@ -7,7 +7,7 @@ const TARGET_URL = process.env.TARGET_URL ?? "https://realfood.gov/";
 const CLONE_URL = process.env.CLONE_URL ?? "http://127.0.0.1:4173/";
 const OUTPUT_ROOT = new URL("../artifacts/parity", import.meta.url);
 
-const sections = ["intro", "problem", "solution", "pyramid", "resources", "answers", "winning", "faqs", "footer"];
+const sections = ["intro", "problem", "solution", "pyramid", "resources", "winning", "faqs", "footer"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "mobile", width: 390, height: 844 },
@@ -39,6 +39,12 @@ const stabilizePage = async (page) => {
         style.id = "__parity_stabilizer__";
         style.textContent = `
           html, body { scroll-behavior: auto !important; }
+          *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+          }
           [class*="usg-banner_banner__"],
           [class*="nav_nav__"],
           [class*="mobile-nav_nav__"],
@@ -123,6 +129,12 @@ const runSet = async (browser, baseUrl, label) => {
         style.id = "__parity_stabilizer__";
         style.textContent = `
           html, body { scroll-behavior: auto !important; }
+          *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+          }
           [class*="usg-banner_banner__"],
           [class*="nav_nav__"],
           [class*="mobile-nav_nav__"],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeHtml } from "../../scripts/mirror/verify-dom-parity.mjs";
+import { normalizeHtml } from "../../scripts/mirror/lib/utils.mjs";
 
 /* ------------------------------------------------------------------ */
 /*  normalizeHtml                                                     */

@@ -4,6 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
+import * as cheerio from "cheerio";
 import config from "../../../mirror.config.mjs";
 
 /**
@@ -239,4 +240,48 @@ export const createLogger = (scriptName) => {
         timing: (label, startMs) =>
             emit("info", `${label} completed`, { durationMs: Date.now() - startMs }),
     };
+};
+
+/**
+ * Normalize HTML for comparison by stripping elements that are intentionally different
+ * between source and mirror (third-party scripts, stubs, nonces, etc.).
+ * @param {string} html
+ * @returns {string}
+ */
+export const normalizeHtml = (html) => {
+    let normalized = html;
+
+    // Remove third-party preload links and script tags.
+    normalized = normalized.replace(/<link[^>]+rel="preload"[^>]+href="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com)[^>]*>/gi, "");
+    normalized = normalized.replace(/<script[^>]+src="https:\/\/(?:challenges\.cloudflare\.com|static\.cloudflareinsights\.com|us-assets\.i\.posthog\.com|us\.i\.posthog\.com)[^>]*><\/script>/gi, "");
+
+    // Remove mirror-specific stubs.
+    normalized = normalized.replace(/<script[^>]+src="\/stubs\/noop-third-party\.js"[^>]*><\/script>/gi, "");
+    normalized = normalized.replace(/<script[^>]+src="\/stubs\/network-guard\.js"[^>]*><\/script>/gi, "");
+
+    // Normalize origins.
+    normalized = normalized.replace(/https:\/\/realfood\.gov/gi, "");
+    normalized = normalized.replace(/https:\/\/cdn\.realfood\.gov/gi, "/assets/mirror/cdn.realfood.gov");
+
+    // Remove nonce, integrity, crossorigin attributes.
+    normalized = normalized.replace(/\snonce="[^"]*"/gi, "");
+    normalized = normalized.replace(/\sintegrity="[^"]*"/gi, "");
+    normalized = normalized.replace(/\scrossorigin="[^"]*"/gi, "");
+
+    // Pass through Cheerio so the source baseline exactly matches the ast rewritten target
+    const $ = cheerio.load(normalized, null, false);
+    normalized = $.html();
+
+    // Normalize Cheerio HTML serialization differences explicitly not caught by load
+    normalized = normalized.replace(/charSet=/g, "charset=");
+    normalized = normalized.replace(/ \/>/g, ">");
+    normalized = normalized.replace(/\/>/g, ">");
+    normalized = normalized.replace(/&#x27;/g, "'");
+
+    // Collapse whitespace.
+    normalized = normalized.replace(/>\s+</g, "><");
+    normalized = normalized.replace(/\s+/g, " ");
+    normalized = normalized.trim();
+
+    return normalized;
 };

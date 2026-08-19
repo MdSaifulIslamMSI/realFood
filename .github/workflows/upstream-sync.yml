@@ -1,0 +1,51 @@
+﻿name: Autonomous Upstream Sync & Verification
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Programmatic Mirror Pipeline
+        run: npm run mirror:orchestrate
+
+      - name: Run Full Quality & Security Gates
+        run: npm run ci:audit-report
+
+      - name: Run E2E Test Suite
+        run: npm run test:e2e
+
+      - name: Detect Changes & Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if [[ -n $(git status --porcelain public/ vercel.json) ]]; then
+            echo "Upstream changes detected. Committing fresh mirror snapshot..."
+            git add public/ vercel.json
+            git commit -m "chore(mirror): autonomous upstream sync [skip ci]"
+            git push
+          else
+            echo "No upstream changes detected. Mirror is up to date."
+          fi

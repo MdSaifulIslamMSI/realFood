@@ -32,4 +32,35 @@ test.describe("Static Mirror Security & Routing Tests", () => {
     expect(response.fetchPatched).toBe(true);
     expect(response.status).toBe(200);
   });
+
+  test("Network Guard rejects blocked WebSocket and EventSource attempts", async ({ page }) => {
+    await page.goto("/");
+
+    const result = await page.evaluate(() => {
+      let wsBlocked = false;
+      let esBlocked = false;
+
+      try {
+        new WebSocket("wss://us.i.posthog.com/socket");
+      } catch (err) {
+        wsBlocked = String(err).includes("Blocked by mirror network guard");
+      }
+
+      try {
+        new EventSource("https://us.i.posthog.com/events");
+      } catch (err) {
+        esBlocked = String(err).includes("Blocked by mirror network guard");
+      }
+
+      return {
+        wsBlocked,
+        esBlocked,
+        loggedCount: window.__MIRROR_BLOCKED_REQUESTS__?.length || 0,
+      };
+    });
+
+    expect(result.wsBlocked).toBe(true);
+    expect(result.esBlocked).toBe(true);
+    expect(result.loggedCount).toBeGreaterThanOrEqual(2);
+  });
 });

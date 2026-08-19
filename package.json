@@ -15,6 +15,7 @@
     "mirror:build:rewrite": "node scripts/mirror/rewrite-html.mjs",
     "mirror:build": "npm run mirror:build:manifest && npm run mirror:build:download && npm run mirror:build:sanitize && npm run mirror:build:rewrite",
     "mirror:refresh": "npm run mirror:capture && npm run mirror:build",
+    "mirror:orchestrate": "node scripts/mirror/orchestrator.mjs",
     "mirror:serve": "node scripts/mirror/serve-mirror.mjs --port 4173",
     "mirror:verify:bytes": "node scripts/mirror/verify-byte-parity.mjs",
     "mirror:verify:network": "node scripts/mirror/verify-network-gate.mjs",
@@ -45,6 +46,6 @@
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

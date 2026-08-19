@@ -19,10 +19,10 @@ const config = {
     firstPartyHosts: ["realfood.gov", "cdn.realfood.gov"],
 
     /** Section IDs expected in the mirrored page (used by tests & capture). */
-    sectionIds: ["problem", "solution", "pyramid", "answers", "winning", "faqs", "footer"],
+    sectionIds: ["problem", "solution", "pyramid", "resources", "winning", "faqs", "footer"],
 
     /** Extended section list used during runtime capture (includes non-nav sections). */
-    captureSectionIds: ["problem", "solution", "pyramid", "resources", "answers", "winning", "faqs", "footer"],
+    captureSectionIds: ["problem", "solution", "pyramid", "resources", "winning", "faqs", "footer"],
 
     /** URLs that must be manually included in the manifest (not auto-discovered). */
     manualUrls: [
@@ -49,10 +49,12 @@ const config = {
         ["https://us.i.posthog.com", "/stubs/noop-third-party.js?"],
         ["https://challenges.cloudflare.com", "/stubs/noop-third-party.js?"],
         ["https://static.cloudflareinsights.com", "/stubs/noop-third-party.js?"],
+        ["https://cdn.realfood.gov", "/assets/mirror/cdn.realfood.gov"],
         ["https:\\/\\/us-assets.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/us.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/challenges.cloudflare.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/static.cloudflareinsights.com", "\\/stubs\\/noop-third-party.js?"],
+        ["https:\\/\\/cdn.realfood.gov", "\\/assets\\/mirror\\/cdn.realfood.gov"],
     ],
 
     /** Mirror server settings. */

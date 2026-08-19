@@ -1,6 +1,8 @@
 /* strict mirror network guard */
 (function () {
   var BLOCKED = ["challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
+  window.__MIRROR_NETWORK_GUARD_ACTIVE__ = true;
+  window.__MIRROR_BLOCKED_REQUESTS__ = window.__MIRROR_BLOCKED_REQUESTS__ || [];
 
   function emitBlocked(reason, url, extra) {
     var detail = {
@@ -9,6 +11,8 @@
       extra: extra || {},
       timestamp: Date.now()
     };
+
+    window.__MIRROR_BLOCKED_REQUESTS__.push(detail);
 
     try {
       window.dispatchEvent(new CustomEvent("mirror-network-blocked", { detail: detail }));
@@ -186,5 +190,40 @@
       return new NativeWorker(url, options);
     };
     window.Worker.prototype = NativeWorker.prototype;
+  }
+
+  if (window.EventSource) {
+    var NativeEventSource = window.EventSource;
+    window.EventSource = function (url, options) {
+      if (isBlockedUrl(url)) {
+        emitBlocked("eventsource", String(url));
+        throw new Error("Blocked by mirror network guard: " + url);
+      }
+      return new NativeEventSource(url, options);
+    };
+    window.EventSource.prototype = NativeEventSource.prototype;
+  }
+
+  if (window.WebSocket) {
+    var NativeWebSocket = window.WebSocket;
+    window.WebSocket = function (url, protocols) {
+      if (isBlockedUrl(url)) {
+        emitBlocked("websocket", String(url));
+        throw new Error("Blocked by mirror network guard: " + url);
+      }
+      return new NativeWebSocket(url, protocols);
+    };
+    window.WebSocket.prototype = NativeWebSocket.prototype;
+  }
+
+  if (navigator && navigator.serviceWorker && typeof navigator.serviceWorker.register === "function") {
+    var nativeRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+    navigator.serviceWorker.register = function (scriptURL, options) {
+      if (isBlockedUrl(scriptURL)) {
+        emitBlocked("serviceWorker", String(scriptURL));
+        return Promise.reject(new Error("Blocked by mirror network guard: " + scriptURL));
+      }
+      return nativeRegister(scriptURL, options);
+    };
   }
 })();

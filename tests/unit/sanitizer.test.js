@@ -27,5 +27,8 @@ describe('Sanitizer Component Isolation Tests', () => {
         expect(content).toContain('us-assets.i.posthog.com');
         expect(content).toContain('XMLHttpRequest.prototype.open');
         expect(content).toContain('navigator.sendBeacon');
+        expect(content).toContain('EventSource');
+        expect(content).toContain('WebSocket');
+        expect(content).toContain('__MIRROR_BLOCKED_REQUESTS__');
     });
 });

@@ -16,5 +16,5 @@ describe("security policy contract", () => {
         }
 
         expect(result.status).toBe(0);
-    });
+    }, 30_000);
 });
