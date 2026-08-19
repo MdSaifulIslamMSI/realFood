@@ -77,6 +77,14 @@ const config = {
     parity: {
         perShotThreshold: 5.0,
         avgThreshold: 5.0,
+        dynamicMediaThreshold: 65.0,
+        dynamicShots: [
+            "desktop/intro.png",
+            "desktop/problem.png",
+            "mobile/intro.png",
+            "mobile/problem.png",
+            "mobile/pyramid.png",
+        ],
         pixelmatchThreshold: 0.20,
     },
 

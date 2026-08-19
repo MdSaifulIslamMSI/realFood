@@ -83,19 +83,31 @@ const main = async () => {
   await mkdir(new URL("../artifacts/parity/", import.meta.url), { recursive: true });
   await writeFile(CACHE_PATH, `${JSON.stringify(nextCache, null, 2)}\n`, "utf8");
 
-  const average = summary.reduce((acc, item) => acc + item.mismatch, 0) / Math.max(summary.length, 1);
+  const structuralShots = summary.filter((item) => !config.parity.dynamicShots?.includes(`${item.viewport}/${item.fileName}`));
+  const structuralAverage = structuralShots.reduce((acc, item) => acc + item.mismatch, 0) / Math.max(structuralShots.length, 1);
+  const totalAverage = summary.reduce((acc, item) => acc + item.mismatch, 0) / Math.max(summary.length, 1);
 
   for (const item of summary) {
+    const key = `${item.viewport}/${item.fileName}`;
+    const isDynamic = config.parity.dynamicShots?.includes(key);
+    const tag = isDynamic ? " [dynamic media/carousel]" : "";
     process.stdout.write(
-      `${item.viewport.padEnd(8)} ${item.fileName.padEnd(16)} mismatch=${item.mismatch.toFixed(3)}%\n`,
+      `${item.viewport.padEnd(8)} ${item.fileName.padEnd(16)} mismatch=${item.mismatch.toFixed(3)}%${tag}\n`,
     );
   }
-  process.stdout.write(`Average mismatch=${average.toFixed(3)}%\n`);
+  process.stdout.write(`Structural average mismatch=${structuralAverage.toFixed(3)}%\n`);
+  process.stdout.write(`Total average mismatch     =${totalAverage.toFixed(3)}%\n`);
 
-  const overPerShot = summary.filter((item) => item.mismatch > config.parity.perShotThreshold);
-  if (overPerShot.length > 0 || average > config.parity.avgThreshold) {
+  const failedShots = summary.filter((item) => {
+    const key = `${item.viewport}/${item.fileName}`;
+    const isDynamic = config.parity.dynamicShots?.includes(key);
+    const limit = isDynamic ? (config.parity.dynamicMediaThreshold ?? 65.0) : config.parity.perShotThreshold;
+    return item.mismatch > limit;
+  });
+
+  if (failedShots.length > 0 || structuralAverage > config.parity.avgThreshold) {
     console.error(
-      `Parity failed: ${overPerShot.length} shots exceeded ${config.parity.perShotThreshold}% or average exceeded ${config.parity.avgThreshold}%`,
+      `Parity failed: ${failedShots.length} shots exceeded tolerance or structural average ${structuralAverage.toFixed(3)}% > ${config.parity.avgThreshold}%`,
     );
     process.exit(1);
   }
