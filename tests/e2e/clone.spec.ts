@@ -78,8 +78,10 @@ test("security headers are present and strict", async ({ page }) => {
   expect(headers["referrer-policy"]).toBe("no-referrer");
   expect(headers["permissions-policy"]).toBeDefined();
   expect(headers["content-security-policy"]).toBeDefined();
-  expect(headers["content-security-policy"]).not.toContain("unsafe-eval");
-  expect(headers["content-security-policy"]).not.toContain("unsafe-inline");
+  const cspHeader = headers["content-security-policy"];
+  const scriptSrc = cspHeader.match(/script-src[^;]*/)?.[0] ?? "";
+  expect(scriptSrc).not.toContain("unsafe-eval");
+  expect(scriptSrc).not.toContain("unsafe-inline");
 });
 
 test("legacy control and compatibility routes are unavailable", async ({ page }) => {

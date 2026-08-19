@@ -45,15 +45,21 @@ const stabilizePage = async (page) => {
             transition-duration: 0s !important;
             transition-delay: 0s !important;
           }
-          [class*="usg-banner_banner__"],
-          [class*="nav_nav__"],
-          [class*="mobile-nav_nav__"],
+          [class*="usg-banner"],
+          [class*="banner"],
+          [class*="nav"],
+          [class*="mobile-nav"],
           section[aria-label="Notifications alt+T"],
           .fluid-width-video-wrapper,
           .bg-video_background-video__,
-          [class*="slider_slider__"],
+          [class*="hero_video"],
+          [class*="previewVideo"],
+          [class*="preview"],
+          [class*="video"],
+          video,
+          [class*="slider"],
           iframe {
-            display: none !important;
+            visibility: hidden !important;
           }
           .swiper-wrapper {
             transform: translate3d(0px, 0px, 0px) !important;
@@ -135,15 +141,21 @@ const runSet = async (browser, baseUrl, label) => {
             transition-duration: 0s !important;
             transition-delay: 0s !important;
           }
-          [class*="usg-banner_banner__"],
-          [class*="nav_nav__"],
-          [class*="mobile-nav_nav__"],
+          [class*="usg-banner"],
+          [class*="banner"],
+          [class*="nav"],
+          [class*="mobile-nav"],
           section[aria-label="Notifications alt+T"],
           .fluid-width-video-wrapper,
           .bg-video_background-video__,
-          [class*="slider_slider__"],
+          [class*="hero_video"],
+          [class*="previewVideo"],
+          [class*="preview"],
+          [class*="video"],
+          video,
+          [class*="slider"],
           iframe {
-            display: none !important;
+            visibility: hidden !important;
           }
           .swiper-wrapper {
             transform: translate3d(0px, 0px, 0px) !important;

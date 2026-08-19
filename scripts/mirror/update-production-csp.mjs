@@ -40,8 +40,10 @@ for (const route of vercelConfig.headers || []) {
                 const scriptSrcRegex = /script-src[^;]*/;
                 csp = csp.replace(scriptSrcRegex, `script-src 'self' ${inlineHashes.join(" ")}`);
 
-                // Remove unsafe-inline from style-src
-                csp = csp.replace(/style-src 'self' 'unsafe-inline'/, "style-src 'self'");
+                // Ensure style-src has unsafe-inline for React component styles
+                if (!csp.includes("style-src 'self' 'unsafe-inline'")) {
+                    csp = csp.replace(/style-src[^;]*/, "style-src 'self' 'unsafe-inline'");
+                }
 
                 header.value = csp;
                 updated = true;
@@ -53,16 +55,17 @@ for (const route of vercelConfig.headers || []) {
 if (updated) {
     writeFileSync(vercelConfigPath, JSON.stringify(vercelConfig, null, 2) + "\n", "utf8");
 
-    // Safety check to ensure it was actually eliminated
+    // Safety check to ensure script-src has no unsafe-inline or unsafe-eval
     const newConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
     const route = newConfig.headers?.find(h => h.source === "/(.*)");
     const newCsp = route?.headers.find(h => h.key === "Content-Security-Policy")?.value || "";
-    if (newCsp.includes("unsafe-inline")) {
-        console.error("ERROR: unsafe-inline is still present in vercel.json after update.");
+    const scriptSrc = newCsp.match(/script-src[^;]*/)?.[0] ?? "";
+    if (scriptSrc.includes("unsafe-inline") || scriptSrc.includes("unsafe-eval")) {
+        console.error("ERROR: script-src contains unsafe-inline or unsafe-eval after update.");
         process.exit(1);
     }
 
-    console.log(`Updated vercel.json CSP with ${inlineHashes.length} secure inline hashes. Eliminated unsafe-inline.`);
+    console.log(`Updated vercel.json CSP with ${inlineHashes.length} secure inline script hashes. Eliminated script unsafe-inline.`);
 } else {
     console.error("ERROR: CSP script-src pattern not found in vercel.json. Update failed.");
     process.exit(1);

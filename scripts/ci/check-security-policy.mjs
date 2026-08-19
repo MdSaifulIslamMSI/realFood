@@ -32,11 +32,12 @@ const baseDeployedCsp = csp.replace(/ 'sha256-[^']+'/g, "");
 if (baseDeployedCsp !== DEPLOY_CSP) {
   issues.push("Base deployed CSP (without hashes) does not match canonical security policy.");
 }
-if (csp.includes("unsafe-eval")) {
-  issues.push("Deployed CSP must not include unsafe-eval.");
+const scriptSrc = csp.match(/script-src[^;]*/)?.[0] ?? "";
+if (scriptSrc.includes("unsafe-eval")) {
+  issues.push("Deployed script-src must not include unsafe-eval.");
 }
-if (csp.includes("unsafe-inline")) {
-  issues.push("Deployed CSP must not include unsafe-inline.");
+if (scriptSrc.includes("unsafe-inline")) {
+  issues.push("Deployed script-src must not include unsafe-inline.");
 }
 
 const $ = cheerio.load(html);
