@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   quality-gates:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
           if-no-files-found: warn
 
   e2e-local:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
 
   e2e-preview:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.preview_url != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
         run: npm run test:e2e
 
   container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
