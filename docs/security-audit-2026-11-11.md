@@ -284,7 +284,7 @@ cannot silently return.
 
 | Check | Command | Result |
 |---|---|---|
-| Unit + security regressions | `npm run test:unit` | 9 files, 80 tests passed |
+| Unit + security regressions | `npm run test:unit` | 11 files, 93 tests passed |
 | Exploit probes | `npm run security:probe` | 10/10 probes passed |
 | Dependency audit | `npm audit --audit-level=high` | 0 vulnerabilities |
 | Policy contract | `npm run policy:check` | 0 issues |
@@ -292,11 +292,17 @@ cannot silently return.
 | E2E | `npm run test:e2e` | 16 tests passed (desktop + mobile) |
 | Container headers | `curl -I` against `/` and `/_next/...js` | CSP/HSTS present on both |
 | Container privilege | `docker inspect` | UID 101, read-only root, `cap_drop: ALL`, `no-new-privileges` |
-| Method probe | `curl -X POST /` | `405` |
+| Method probe | `curl -X POST /` | `405` on Node/Nginx, `400` on Netlify (both fail closed) |
 | Directory probe | `curl /images/` | `404` on Node, `403` on Nginx; process/container alive |
 | Traversal probe | `curl '/..%2fpackage.json'` | `403` |
 | CORS probe | `Origin: https://attacker.vercel.app` | no ACAO |
 | Null origin | `Origin: null` | no ACAO |
+| Netlify live E2E | `PREVIEW_URL=https://realfood-mirror-prod.netlify.app npm run test:e2e` | 16 tests passed |
+| Netlify smoke | `PREVIEW_URL=... npm run smoke:deploy` | 8 checks, 0 failures |
+| Netlify CSP sink | `POST /api/csp-report` | `204`; oversized `413`; wrong type `415`; `GET` `405` |
+| Netlify fail-closed API | `GET /api/unknown` | `404` |
+| Netlify image rewrite | `/cdn-cgi/image/.../images/intro/broccoli.webp` | `200 image/webp` |
+| Netlify byte ranges | PDF + MP4 with `Range: bytes=0-1023` | `206` with correct `Content-Range` |
 
 > The Docker checks require a running Docker daemon. If Docker is unavailable,
 > the equivalent Nginx assertions are still enforced statically by
