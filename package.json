@@ -45,13 +45,13 @@
     "htmlparser2": "^9.1.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.11.1",
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^24.19.2",
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
     "cheerio": "^1.2.0",
-    "pixelmatch": "^7.1.0",
+    "pixelmatch": "^8.0.0",
     "pngjs": "^7.0.0",
-    "typescript": "^5",
+    "typescript": "^7",
     "vitest": "^5.1.0"
   }
 }
