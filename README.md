@@ -8,17 +8,20 @@
 [![Node](https://img.shields.io/badge/node-%E2%89%A522-339933)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+**Live deployment:** <https://realfood-mirror-prod.netlify.app>
+
 ---
 
 ## What this is
 
 `realfood-mirror` captures the public `realfood.gov` site, strips every tracker
 and third-party dependency, rewrites the payload for offline/air-gapped
-delivery, and serves it through three independently hardened targets:
+delivery, and serves it through four independently hardened targets:
 
 1. **Vercel** — production static hosting, edge middleware, serverless stubs.
-2. **Docker + Nginx** — unprivileged, read-only, capability-free container.
-3. **Node.js** — dependency-free local verification server.
+2. **Netlify** — live production target with function parity for telemetry and CSP reports.
+3. **Docker + Nginx** — unprivileged, read-only, capability-free container.
+4. **Node.js** — dependency-free local verification server.
 
 The repository is not a screenshot archive. It is a reproducible supply-chain
 pipeline with byte, DOM, network, visual, policy, and integrity gates. A failed
@@ -100,6 +103,17 @@ curl -I http://127.0.0.1:8080/
 The container listens on **8080**, runs as **UID 101**, and is read-only except
 for two small `tmpfs` mounts required by Nginx.
 
+Netlify deployment:
+
+```bash
+npm run deploy:netlify   # regenerate _headers, deploy public/ + netlify/functions/
+```
+
+The Netlify target publishes `public/`, generates `public/_headers` from
+`vercel.json`, routes `/e`, `/decide`, `/api/stub`, and `/api/csp-report` to
+Functions, rewrites `/cdn-cgi/image/…` to the mirrored originals, and fails
+unknown `/api/*` paths closed with `404`.
+
 ---
 
 ## Command surface
@@ -118,6 +132,8 @@ for two small `tmpfs` mounts required by Nginx.
 | `npm run check:mirror-integrity` | Block trackers, external subresources, secrets, source maps |
 | `npm run check:tracked-generated` | Reject committed build artifacts |
 | `npm run audit:deps` | `npm audit --audit-level=high` |
+| `npm run netlify:headers` | Regenerate `public/_headers` from the canonical Vercel policy |
+| `npm run deploy:netlify` | Build headers and deploy `public/` + `netlify/functions/` to Netlify production |
 | `npm run ci:local` | Full local gate: typecheck, tests, exploit probes, policy, integrity, audit |
 | `npm run ci:audit-report` | Run every gate and emit `artifacts/ci/audit-report.json` |
 
@@ -132,6 +148,7 @@ The single source of truth is [`security/policy.mjs`](security/policy.mjs).
 inline script and writes the exact same policy to:
 
 - `vercel.json` (production),
+- `public/_headers` (Netlify, generated from `vercel.json`),
 - `nginx/security-headers.conf` (Docker),
 - the Node server at runtime (per-response nonce).
 
@@ -257,6 +274,13 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/
 docker rm -f realfood-check
 ```
 
+Live production verification:
+
+```bash
+PREVIEW_URL=https://realfood-mirror-prod.netlify.app npm run smoke:deploy
+PREVIEW_URL=https://realfood-mirror-prod.netlify.app npm run test:e2e
+```
+
 Expected: security headers on both HTML and asset responses, and `405` for the
 POST probe.
 
@@ -282,7 +306,9 @@ api/                     Vercel functions: telemetry stub, CSP report sink
 security/                Canonical CSP/header/CORS policy (single source of truth)
 scripts/mirror/          Capture, download, sanitize, rewrite, serve, verify
 scripts/ci/              Policy, integrity, tracked-artifact, and audit gates
-public/                  Mirrored payload + generated guards/stubs
+public/                  Mirrored payload, security guards, generated headers/redirects
+netlify/                 Netlify Functions: telemetry stub, CSP report sink, fail-closed 404
+netlify.toml             Netlify publish/functions configuration
 nginx/                   Generated security-header snippet
 tests/unit/              Policy, schema, CORS, sanitizer tests
 tests/security/          Exploit-regression suite for the Node server
@@ -312,6 +338,11 @@ advisories in `.npmrc`.
 **The container fails its healthcheck.** Inspect
 `docker logs realfood-mirror`; verify `/healthz` and that the read-only mounts
 exist. Do not run the container as root to "fix" it.
+
+**Netlify security headers drift.** Run `npm run netlify:headers` and commit the
+regenerated `public/_headers`. `npm run policy:check` fails when it diverges from
+`vercel.json`. Redeploy with `npm run deploy:netlify`; verify with
+`PREVIEW_URL=https://realfood-mirror-prod.netlify.app npm run smoke:deploy`.
 
 ---
 

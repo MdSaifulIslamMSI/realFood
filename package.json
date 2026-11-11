@@ -25,6 +25,8 @@
     "mirror:verify:network": "node scripts/mirror/verify-network-gate.mjs",
     "mirror:verify:dom": "node scripts/mirror/verify-dom-parity.mjs",
     "mirror:verify": "node scripts/mirror/verify-all.mjs",
+    "netlify:headers": "node scripts/mirror/update-netlify-headers.mjs",
+    "deploy:netlify": "npm run netlify:headers && npx --yes netlify deploy --prod --dir=public --functions=netlify/functions --no-build",
     "parity:capture": "node scripts/capture-parity.mjs",
     "parity:compare": "node scripts/compare-parity.mjs",
     "test:parity": "npm run parity:capture && npm run parity:compare",

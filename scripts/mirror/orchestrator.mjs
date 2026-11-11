@@ -20,6 +20,7 @@ export const STAGES = [
   { name: "verify:sanity", script: "scripts/mirror/verify-sanity.mjs" },
   { name: "build:rewrite", script: "scripts/mirror/rewrite-html.mjs" },
   { name: "update:csp", script: "scripts/mirror/update-production-csp.mjs" },
+  { name: "netlify:headers", script: "scripts/mirror/update-netlify-headers.mjs" },
 ];
 
 const runStage = (stage) =>
