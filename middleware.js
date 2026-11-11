@@ -1,34 +1,48 @@
+import { buildCorsHeaders, isOriginAllowed } from "./security/cors.mjs";
+
 export const config = {
-    matcher: '/stubs/:path*',
+  matcher: "/stubs/:path*",
 };
 
-function isAllowedOrigin(origin) {
-    if (!origin) return false;
-    if (origin === 'https://clone-smoky-xi.vercel.app') return true;
-    if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) return true;
-    if (process.env.VERCEL_URL && origin === `https://${process.env.VERCEL_URL}`) return true;
-    if (/^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(origin)) return true;
-    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
-    return false;
-}
+const STUB_METHODS = new Set(["GET", "HEAD", "POST", "OPTIONS"]);
+
+const textResponse = (status, headers, body = "") =>
+  new Response(body, {
+    status,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...headers,
+    },
+  });
 
 export default function middleware(request) {
-    // If a tracking script attempts to POST or OPTIONS to a static stub file, Vercel will 
-    // normally throw a 405 Method Not Allowed because static files only support GET.
-    // We intercept the request at the Edge before Vercel's static router even sees it.
+  // Tracking scripts occasionally POST/OPTIONS to a static stub path. Vercel
+  // would answer 405 for static files, so the edge terminates those requests
+  // locally. No body is read, stored, or forwarded.
+  const origin = request.headers.get("Origin");
+  const method = request.method.toUpperCase();
 
-    if (request.method === 'POST' || request.method === 'OPTIONS') {
-        const origin = request.headers.get('Origin') || '';
-        const allowedOrigin = isAllowedOrigin(origin) ? origin : 'null';
+  if (origin && !isOriginAllowed(origin)) {
+    return textResponse(403, { Vary: "Origin" });
+  }
 
-        return new Response('', {
-            status: 200,
-            headers: {
-                'Access-Control-Allow-Origin': allowedOrigin,
-                'Vary': 'Origin',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
-                'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-            }
-        });
-    }
+  if (!STUB_METHODS.has(method)) {
+    return textResponse(405, {
+      ...buildCorsHeaders(origin),
+      Allow: "GET, HEAD, POST, OPTIONS",
+    });
+  }
+
+  if (method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...buildCorsHeaders(origin),
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  return textResponse(200, buildCorsHeaders(origin));
 }

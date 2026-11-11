@@ -12,15 +12,23 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-gates:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -30,19 +38,22 @@ jobs:
         run: npm run ci:audit-report
 
       - name: Upload audit report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: audit-report
           path: artifacts/ci/audit-report.json
+          if-no-files-found: warn
 
   e2e-local:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -54,6 +65,14 @@ jobs:
       - name: Run local E2E tests
         run: npm run test:e2e
 
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+
       - name: Enforce Upstream Defacement Defenses (Visual Parity)
         run: |
           npm run mirror:serve &
@@ -62,13 +81,14 @@ jobs:
 
   e2e-preview:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.preview_url != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -86,3 +106,47 @@ jobs:
         env:
           PREVIEW_URL: ${{ inputs.preview_url }}
         run: npm run test:e2e
+
+  container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build hardened image
+        run: docker build -t realfood-mirror:ci .
+
+      - name: Verify container privilege and header policy
+        run: |
+          set -euo pipefail
+          docker run -d --name mirror -p 18080:8080 \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            --tmpfs /var/cache/nginx:rw,noexec,nosuid,size=16m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            realfood-mirror:ci
+          trap 'docker logs mirror || true; docker rm -f mirror || true' EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+
+          test "$(docker exec mirror id -u)" = "101"
+          test "$(docker inspect mirror --format '{{.HostConfig.ReadonlyRootfs}}')" = "true"
+
+          html_headers="$(curl -fsSI http://127.0.0.1:18080/)"
+          asset_headers="$(curl -fsSI http://127.0.0.1:18080/_next/static/chunks/386-329e5ca5ca162a74.js)"
+
+          for headers in "$html_headers" "$asset_headers"; do
+            echo "$headers" | grep -qi '^content-security-policy:'
+            echo "$headers" | grep -qi '^x-frame-options: DENY'
+            echo "$headers" | grep -qi '^strict-transport-security:'
+          done
+
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/)" = "405"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/csp-report' --data '{}' http://127.0.0.1:18080/api/csp-report)" = "204"
+          ! curl -fsSI -H 'Origin: https://attacker.vercel.app' http://127.0.0.1:18080/ | grep -qi '^access-control-allow-origin:'
+
+          docker exec mirror nginx -t

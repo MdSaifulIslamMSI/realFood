@@ -84,11 +84,19 @@ test("security headers are present and strict", async ({ page }) => {
   expect(scriptSrc).not.toContain("unsafe-inline");
 });
 
-test("legacy control and compatibility routes are unavailable", async ({ page }) => {
-  const routes = ["/api/cron", "/api/stub", "/e", "/e/", "/decide/"];
-
-  for (const route of routes) {
+test("telemetry stubs are same-origin no-ops and legacy control routes are gone", async ({ page }) => {
+  for (const route of ["/e", "/e/", "/decide", "/decide/"]) {
     const response = await page.request.get(route);
-    expect(response.status(), `route ${route} should not be public`).toBeGreaterThanOrEqual(400);
+    expect(response.status(), `route ${route} should be a local 200 stub`).toBe(200);
+    expect(response.headers()["access-control-allow-origin"]).toBeUndefined();
   }
+
+  const post = await page.request.post("/e", { data: { event: "test" } });
+  expect(post.status()).toBe(200);
+
+  const cron = await page.request.get("/api/cron");
+  expect(cron.status()).toBeGreaterThanOrEqual(400);
+
+  const stateChanging = await page.request.post("/");
+  expect(stateChanging.status()).toBe(405);
 });

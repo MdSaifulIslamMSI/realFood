@@ -1,14 +1,27 @@
-name: Autonomous Upstream Sync & Verification
+name: Upstream Mirror Sync (Review Required)
 
 on:
   schedule:
-    # Run daily at 00:00 UTC
+    # Run daily at 00:00 UTC.
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+# The sync job may open a pull request, but it must never push to main. The
+# previous workflow force-pushed an unreviewed upstream snapshot straight to
+# production, which turned realfood.gov (or anyone who could influence it) into
+# a supply-chain input for this repository.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
 jobs:
   sync-and-verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -36,22 +49,34 @@ jobs:
       - name: Run E2E Test Suite
         run: npm run test:e2e
 
-      - name: Detect Changes & Commit
+      - name: Open review pull request for upstream changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SYNC_WEBHOOK_URL: ${{ secrets.SYNC_WEBHOOK_URL }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          if [[ -n $(git status --porcelain public/ vercel.json) ]]; then
-            echo "Upstream changes detected. Committing fresh mirror snapshot..."
-            git add public/ vercel.json
-            git commit -m "chore(mirror): autonomous upstream sync [skip ci]"
-            git push
-            
-            if [[ -n "${{ secrets.SYNC_WEBHOOK_URL }}" ]]; then
-              curl -s -X POST -H "Content-Type: application/json" \
-                -d '{"content": "🚀 **realfood-mirror**: Fresh upstream release synchronized and verified successfully."}' \
-                "${{ secrets.SYNC_WEBHOOK_URL }}" || true
-            fi
-          else
+          set -euo pipefail
+
+          if [[ -z "$(git status --porcelain public/ vercel.json)" ]]; then
             echo "No upstream changes detected. Mirror is up to date."
+            exit 0
+          fi
+
+          branch="mirror/sync-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add public/ vercel.json
+          git commit -m "chore(mirror): upstream sync snapshot ${GITHUB_RUN_ID}"
+          git push -u origin "$branch"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(mirror): upstream sync ${GITHUB_RUN_ID}" \
+            --body "Automated upstream snapshot. CI gates and visual parity passed before this PR was opened. Review the diff before merging; the sync job has no permission to push to main."
+
+          if [[ -n "${SYNC_WEBHOOK_URL:-}" ]]; then
+            curl -sS -X POST -H "Content-Type: application/json" \
+              --data '{"content":"**realfood-mirror**: upstream snapshot verified and opened for review."}' \
+              "$SYNC_WEBHOOK_URL" || true
           fi
