@@ -1,6 +1,6 @@
 /* strict mirror network guard */
 (function () {
-  var BLOCKED = ["challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com"];
+  var BLOCKED = ["challenges.cloudflare.com","static.cloudflareinsights.com","us-assets.i.posthog.com","us.i.posthog.com","embed.videodelivery.net"];
   window.__MIRROR_NETWORK_GUARD_ACTIVE__ = true;
   window.__MIRROR_BLOCKED_REQUESTS__ = window.__MIRROR_BLOCKED_REQUESTS__ || [];
 

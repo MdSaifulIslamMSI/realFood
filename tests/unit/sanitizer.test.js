@@ -25,6 +25,7 @@ describe('Sanitizer Component Isolation Tests', () => {
         // Verify the static injection embedded the Cloudflare and PostHog domains
         expect(content).toContain('static.cloudflareinsights.com');
         expect(content).toContain('us-assets.i.posthog.com');
+        expect(content).toContain('embed.videodelivery.net');
         expect(content).toContain('XMLHttpRequest.prototype.open');
         expect(content).toContain('navigator.sendBeacon');
         expect(content).toContain('EventSource');

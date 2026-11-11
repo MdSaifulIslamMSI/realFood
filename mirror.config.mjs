@@ -13,6 +13,7 @@ const config = {
         "static.cloudflareinsights.com",
         "us-assets.i.posthog.com",
         "us.i.posthog.com",
+        "embed.videodelivery.net",
     ],
 
     /** First-party hostnames considered part of the source site. */
@@ -41,6 +42,7 @@ const config = {
         /https:\/\/static\.cloudflareinsights\.com[^"']*/gi,
         /https:\/\/us-assets\.i\.posthog\.com[^"']*/gi,
         /https:\/\/us\.i\.posthog\.com[^"']*/gi,
+        /https:\/\/embed\.videodelivery\.net[^"']*/gi,
     ],
 
     /** Replacement pairs for sanitizing third-party references in JS/CSS bundles. */
@@ -49,11 +51,13 @@ const config = {
         ["https://us.i.posthog.com", "/stubs/noop-third-party.js?"],
         ["https://challenges.cloudflare.com", "/stubs/noop-third-party.js?"],
         ["https://static.cloudflareinsights.com", "/stubs/noop-third-party.js?"],
+        ["https://embed.videodelivery.net", "/stubs/noop-third-party.js?"],
         ["https://cdn.realfood.gov", "/assets/mirror/cdn.realfood.gov"],
         ["https:\\/\\/us-assets.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/us.i.posthog.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/challenges.cloudflare.com", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/static.cloudflareinsights.com", "\\/stubs\\/noop-third-party.js?"],
+        ["https:\\/\\/embed.videodelivery.net", "\\/stubs\\/noop-third-party.js?"],
         ["https:\\/\\/cdn.realfood.gov", "\\/assets\\/mirror\\/cdn.realfood.gov"],
     ],
 

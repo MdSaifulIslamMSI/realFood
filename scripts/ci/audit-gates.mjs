@@ -7,7 +7,9 @@ const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
 const gates = [
   { name: "typecheck", args: ["run", "typecheck"] },
   { name: "unit-tests", args: ["run", "test:unit"] },
+  { name: "exploit-probes", args: ["run", "security:probe"] },
   { name: "policy-check", args: ["run", "policy:check"] },
+  { name: "mirror-integrity-check", args: ["run", "check:mirror-integrity"] },
   { name: "tracked-generated-check", args: ["run", "check:tracked-generated"] },
   { name: "dependency-audit", args: ["run", "audit:deps"] },
 ];

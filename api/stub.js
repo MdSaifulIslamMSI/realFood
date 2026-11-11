@@ -1,28 +1,36 @@
-function isAllowedOrigin(origin) {
-    if (!origin) return false;
-    if (origin === 'https://clone-smoky-xi.vercel.app') return true;
-    if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) return true;
-    if (process.env.VERCEL_URL && origin === `https://${process.env.VERCEL_URL}`) return true;
-    if (/^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(origin)) return true;
-    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
-    return false;
-}
+import { buildCorsHeaders, isOriginAllowed } from "../security/cors.mjs";
+
+const STUB_METHODS = new Set(["GET", "HEAD", "POST", "OPTIONS"]);
 
 export default function handler(req, res) {
-    const origin = req.headers.origin || '';
-    const allowedOrigin = isAllowedOrigin(origin) ? origin : 'null';
+  const origin = req.headers.origin || "";
+  const method = String(req.method || "GET").toUpperCase();
 
-    // Reflect CORS only for explicitly allowed origins; all others receive 'null'.
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
-    res.setHeader('Vary', 'Origin')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST')
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version')
+  res.setHeader("Cache-Control", "no-store");
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end()
-        return
-    }
+  // A browser only sends Origin for cross-origin requests. Reject disallowed
+  // origins outright instead of granting them a spoofable `null` origin.
+  if (origin && !isOriginAllowed(origin)) {
+    res.status(403).end();
+    return;
+  }
 
-    // Return a 200 OK with no content to satisfy analytics scripts without throwing errors.
-    res.status(200).send('')
+  for (const [key, value] of Object.entries(buildCorsHeaders(origin))) {
+    res.setHeader(key, value);
+  }
+
+  if (!STUB_METHODS.has(method)) {
+    res.setHeader("Allow", "GET, HEAD, POST, OPTIONS");
+    res.status(405).end();
+    return;
+  }
+
+  if (method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+
+  // Return an empty 200 so analytics scripts fail closed without throwing.
+  // The request body is intentionally ignored.
+  res.status(200).send("");
 }

@@ -1,16 +1,25 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { DEPLOY_CSP, DEPLOY_HEADERS, REQUIRED_README_CLAIMS } from "../../security/policy.mjs";
+import {
+  DEPLOY_CSP,
+  DEPLOY_HEADERS,
+  REQUIRED_README_CLAIMS,
+} from "../../security/policy.mjs";
+import config from "../../mirror.config.mjs";
 import * as cheerio from "cheerio";
 
 const issues = [];
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-const vercelConfig = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
-const readme = readFileSync(new URL("../../README.md", import.meta.url), "utf8");
-const html = readFileSync(new URL("../../public/index.html", import.meta.url), "utf8");
-
-
+const vercelConfig = JSON.parse(read("../../vercel.json"));
+const readme = read("../../README.md");
+const html = read("../../public/index.html");
+const nginxHeaders = read("../../nginx/security-headers.conf");
+const nginxConfig = read("../../nginx.conf");
+const middleware = read("../../middleware.js");
+const stub = read("../../api/stub.js");
+const dockerfile = read("../../Dockerfile");
 
 if (Array.isArray(vercelConfig.crons) && vercelConfig.crons.length > 0) {
   issues.push("vercel.json must not define public cron endpoints.");
@@ -32,6 +41,10 @@ const baseDeployedCsp = csp.replace(/ 'sha256-[^']+'/g, "");
 if (baseDeployedCsp !== DEPLOY_CSP) {
   issues.push("Base deployed CSP (without hashes) does not match canonical security policy.");
 }
+if (!csp.includes("report-uri /api/csp-report")) {
+  issues.push("Deployed CSP must send violations to /api/csp-report.");
+}
+
 const scriptSrc = csp.match(/script-src[^;]*/)?.[0] ?? "";
 if (scriptSrc.includes("unsafe-eval")) {
   issues.push("Deployed script-src must not include unsafe-eval.");
@@ -51,18 +64,81 @@ $("script").each((_, el) => {
   }
 });
 
+// The Nginx/Docker path must ship the same CSP, hashes included.
+const nginxCsp = /add_header Content-Security-Policy "([^"]+)" always;/.exec(nginxHeaders)?.[1];
+if (nginxCsp !== csp) {
+  issues.push("nginx/security-headers.conf CSP does not match vercel.json CSP.");
+}
+for (const [key, value] of [
+  ["Content-Security-Policy", csp],
+  ...DEPLOY_HEADERS.filter((header) => header.key !== "Content-Security-Policy").map(
+    (header) => [header.key, header.value],
+  ),
+]) {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (!new RegExp(`add_header ${key} "${escaped}" always;`).test(nginxHeaders)) {
+    issues.push(`nginx/security-headers.conf is missing ${key}.`);
+  }
+}
+
+// CORS must never be wildcarded or reflected from arbitrary *.vercel.app hosts.
+for (const [name, source] of [
+  ["middleware.js", middleware],
+  ["api/stub.js", stub],
+  ["nginx.conf", nginxConfig],
+]) {
+  if (/Access-Control-Allow-Origin["'\s:,]*["']\*["']/i.test(source)) {
+    issues.push(`${name} must not emit a wildcard Access-Control-Allow-Origin.`);
+  }
+  if (/\.vercel\\?\.app/.test(source) || /\.vercel\.app/.test(source)) {
+    issues.push(`${name} must not trust arbitrary *.vercel.app origins.`);
+  }
+  if (/Access-Control-Allow-Origin["'\s:,]*["']null["']/i.test(source)) {
+    issues.push(`${name} must not emit a null Access-Control-Allow-Origin.`);
+  }
+}
+
+if (!middleware.includes("isOriginAllowed") || !stub.includes("isOriginAllowed")) {
+  issues.push("Edge middleware and API stubs must use the shared CORS policy.");
+}
+
+// Docker must run as a non-root, unprivileged Nginx image.
+if (!/FROM\s+nginxinc\/nginx-unprivileged:/i.test(dockerfile)) {
+  issues.push("Dockerfile must use the unprivileged Nginx image.");
+}
+if (!/^USER\s+\S+/m.test(dockerfile)) {
+  issues.push("Dockerfile must declare a non-root USER.");
+}
+
+// Vercel must route both telemetry spellings, including /decide without a slash.
+const rewrites = vercelConfig.rewrites ?? [];
+for (const source of ["/e", "/e/", "/decide", "/decide/"]) {
+  if (!rewrites.some((rewrite) => rewrite.source === source && rewrite.destination === "/api/stub")) {
+    issues.push(`vercel.json is missing the ${source} telemetry rewrite.`);
+  }
+}
+
 if (existsSync(new URL("../../api/cron.js", import.meta.url))) {
   issues.push("api/cron.js must not exist.");
 }
 
+if (existsSync(new URL("../../public/assets/mirror/realfood.gov", import.meta.url))) {
+  issues.push("Unreferenced public/assets/mirror/realfood.gov subtree must not be tracked.");
+}
+
+// The generated network guard must know every blocked host.
+const guard = read("../../public/stubs/network-guard.js");
+for (const host of config.blockedHosts) {
+  if (!guard.includes(host)) {
+    issues.push(`Network guard is missing blocked host: ${host}`);
+  }
+}
 
 for (const claim of REQUIRED_README_CLAIMS) {
   if (!readme.includes(claim)) {
     issues.push(`README missing required claim: ${claim}`);
   }
 }
-
-
 
 const report = {
   checkedAt: new Date().toISOString(),

@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "serve": "node scripts/mirror/serve-mirror.mjs",
     "mirror:capture:html": "node scripts/mirror/capture-html.mjs",
@@ -29,10 +33,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "policy:check": "node scripts/ci/check-security-policy.mjs",
     "check:tracked-generated": "node scripts/ci/check-tracked-generated.mjs",
+    "check:mirror-integrity": "node scripts/ci/scan-mirror-integrity.mjs",
     "audit:deps": "npm audit --json --audit-level=high",
     "ci:audit-report": "node scripts/ci/audit-gates.mjs",
-    "ci:local": "npm run typecheck && npm run test:unit && npm run policy:check && npm run check:tracked-generated && npm run audit:deps",
+    "ci:local": "npm run typecheck && npm run test:unit && npm run security:probe && npm run policy:check && npm run check:mirror-integrity && npm run check:tracked-generated && npm run audit:deps",
     "test:unit": "vitest run",
+    "security:probe": "node scripts/security/exploit-probes.mjs",
     "test": "npm run test:unit"
   },
   "dependencies": {
@@ -41,11 +47,11 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.58.2",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
     "cheerio": "^1.2.0",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
     "typescript": "^5",
-    "vitest": "^3.2.7"
+    "vitest": "^5.1.0"
   }
 }
