@@ -122,6 +122,10 @@ allows localhost only outside production. Disallowed origins receive
   only `GET`, `HEAD`, `POST`, and `OPTIONS`.
 - `/cdn-cgi/image/:options/images/*` rewrites to the mirrored image path, so
   the captured responsive image URLs resolve without a third-party optimizer.
+- The project-level **Powered by Netlify badge must stay disabled**. Netlify
+  injects that script into static HTML before hydration, which mutates the DOM
+  and forces a full client re-render. `npm run smoke:deploy` fails if the
+  `data-nf-variant` marker or `/.netlify/scripts/hud` reappears.
 
 ### Docker / Nginx (air-gapped)
 

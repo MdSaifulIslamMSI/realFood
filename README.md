@@ -344,6 +344,11 @@ regenerated `public/_headers`. `npm run policy:check` fails when it diverges fro
 `vercel.json`. Redeploy with `npm run deploy:netlify`; verify with
 `PREVIEW_URL=https://realfood-mirror-prod.netlify.app npm run smoke:deploy`.
 
+**Netlify injects a badge or toolbar script.** Keep the project-level
+**Powered by Netlify badge** disabled (Project configuration > General). The
+injected script mutates the DOM before React hydration and forces a full client
+re-render. `npm run smoke:deploy` fails closed on the `data-nf-variant` marker.
+
 ---
 
 ## Contributing
