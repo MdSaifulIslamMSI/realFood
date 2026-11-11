@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { auditCsp } from "./lib/csp-audit.mjs";
 import { createLogger } from "./lib/utils.mjs";
 
 const log = createLogger("smoke-deploy");
@@ -10,14 +11,12 @@ if (!previewUrl) {
 
 const requestOnce = async (url) => {
   const response = await fetch(url, { method: "GET" });
-  const csp = response.headers.get("content-security-policy") ?? "";
-  const hasUnsafe = csp.includes("unsafe-inline") || csp.includes("unsafe-eval");
+  const csp = auditCsp(response.headers.get("content-security-policy") ?? "");
 
   return {
     url,
     status: response.status,
-    hasCsp: csp.length > 0,
-    hasUnsafe,
+    ...csp,
   };
 };
 
@@ -27,7 +26,14 @@ const main = async () => {
     Array.from({ length: 8 }, () => requestOnce(new URL("/", previewUrl).toString())),
   );
 
-  const failures = checks.filter((check) => check.status !== 200 || !check.hasCsp || check.hasUnsafe);
+  const failures = checks.filter(
+    (check) =>
+      check.status !== 200 ||
+      !check.present ||
+      !check.hasScriptSrc ||
+      check.hasUnsafeInlineScript ||
+      check.hasUnsafeEval,
+  );
   log.info("Smoke checks completed", {
     previewUrl,
     checks: checks.length,
