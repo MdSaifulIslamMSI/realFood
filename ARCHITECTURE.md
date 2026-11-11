@@ -110,6 +110,23 @@ allows localhost only outside production. Disallowed origins receive
 - Rewrites route `/e`, `/e/*`, `/decide`, `/decide/*`, and query-variant stub
   paths to the function; no cron endpoint exists.
 
+### Netlify (portable production deployment)
+
+- `netlify.toml` publishes `public/` and bundles `netlify/functions/`.
+- `public/_headers` is generated from `vercel.json` by
+  `npm run netlify:headers`; `npm run policy:check` fails on drift.
+- `public/_redirects` maps `/e`, `/decide`, `/api/stub`, and `/api/csp-report`
+  to the functions and fails unknown `/api/*` paths closed with `404`.
+- `netlify/functions/stub.mjs` reuses `security/cors.mjs`, allows same-origin
+  telemetry, rejects `null` and arbitrary `*.vercel.app` origins, and exposes
+  only `GET`, `HEAD`, `POST`, and `OPTIONS`.
+- `/cdn-cgi/image/:options/images/*` rewrites to the mirrored image path, so
+  the captured responsive image URLs resolve without a third-party optimizer.
+- The project-level **Powered by Netlify badge must stay disabled**. Netlify
+  injects that script into static HTML before hydration, which mutates the DOM
+  and forces a full client re-render. `npm run smoke:deploy` fails if the
+  `data-nf-variant` marker or `/.netlify/scripts/hud` reappears.
+
 ### Docker / Nginx (air-gapped)
 
 - `nginxinc/nginx-unprivileged:1.27-alpine`, `USER 101`, port 8080.

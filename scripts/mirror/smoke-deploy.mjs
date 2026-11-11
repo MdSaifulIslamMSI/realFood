@@ -11,11 +11,16 @@ if (!previewUrl) {
 
 const requestOnce = async (url) => {
   const response = await fetch(url, { method: "GET" });
+  const body = await response.text();
   const csp = auditCsp(response.headers.get("content-security-policy") ?? "");
 
   return {
     url,
     status: response.status,
+    // Host-injected UI (for example Netlify's Powered-by badge) mutates the
+    // DOM before hydration and breaks the self-contained mirror contract.
+    hasPlatformInjection:
+      body.includes("data-nf-variant") || body.includes("/.netlify/scripts/hud"),
     ...csp,
   };
 };
@@ -32,7 +37,8 @@ const main = async () => {
       !check.present ||
       !check.hasScriptSrc ||
       check.hasUnsafeInlineScript ||
-      check.hasUnsafeEval,
+      check.hasUnsafeEval ||
+      check.hasPlatformInjection,
   );
   log.info("Smoke checks completed", {
     previewUrl,

@@ -1,0 +1,11 @@
+/e  /.netlify/functions/stub  200
+/e/  /.netlify/functions/stub  200
+/e/*  /.netlify/functions/stub  200
+/decide  /.netlify/functions/stub  200
+/decide/  /.netlify/functions/stub  200
+/decide/*  /.netlify/functions/stub  200
+/api/stub  /.netlify/functions/stub  200
+/api/csp-report  /.netlify/functions/csp-report  200
+/cdn-cgi/image/:options/images/*  /images/:splat  200
+/api/*  /.netlify/functions/not-found  404
+/*  /index.html  200

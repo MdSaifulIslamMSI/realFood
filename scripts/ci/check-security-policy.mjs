@@ -20,6 +20,11 @@ const nginxConfig = read("../../nginx.conf");
 const middleware = read("../../middleware.js");
 const stub = read("../../api/stub.js");
 const dockerfile = read("../../Dockerfile");
+const netlifyConfig = read("../../netlify.toml");
+const netlifyHeaders = read("../../public/_headers");
+const netlifyRedirects = read("../../public/_redirects");
+const netlifyStub = read("../../netlify/functions/stub.mjs");
+const netlifyCspReport = read("../../netlify/functions/csp-report.mjs");
 
 if (Array.isArray(vercelConfig.crons) && vercelConfig.crons.length > 0) {
   issues.push("vercel.json must not define public cron endpoints.");
@@ -51,6 +56,54 @@ if (scriptSrc.includes("unsafe-eval")) {
 }
 if (scriptSrc.includes("unsafe-inline")) {
   issues.push("Deployed script-src must not include unsafe-inline.");
+}
+
+// Netlify's `_headers` file must stay byte-identical to the Vercel policy.
+const netlifyHeaderMap = new Map();
+for (const line of netlifyHeaders.split("\n")) {
+  const match = /^\s{2}([A-Za-z0-9-]+):\s*(.+)$/.exec(line);
+  if (match) netlifyHeaderMap.set(match[1], match[2].trim());
+}
+for (const expected of DEPLOY_HEADERS) {
+  const actual = netlifyHeaderMap.get(expected.key);
+  const wanted = expected.key === "Content-Security-Policy" ? csp : expected.value;
+  if (actual !== wanted) {
+    issues.push(`public/_headers mismatch for ${expected.key}.`);
+  }
+}
+
+if (!/publish\s*=\s*"public"/.test(netlifyConfig)) {
+  issues.push('netlify.toml must publish the "public" directory.');
+}
+if (!/functions\s*=\s*"netlify\/functions"/.test(netlifyConfig)) {
+  issues.push('netlify.toml must use the "netlify/functions" directory.');
+}
+for (const route of [
+  "/e",
+  "/e/",
+  "/e/*",
+  "/decide",
+  "/decide/",
+  "/decide/*",
+  "/api/stub",
+  "/api/csp-report",
+  "/api/*",
+  "/cdn-cgi/image/:options/images/*",
+  "/*",
+]) {
+  const present = netlifyRedirects
+    .split("\n")
+    .map((line) => line.trim())
+    .some((line) => line.startsWith(`${route} `));
+  if (!present) {
+    issues.push(`public/_redirects is missing the ${route} route.`);
+  }
+}
+if (!netlifyStub.includes("isOriginAllowed") || !netlifyStub.includes("buildCorsHeaders")) {
+  issues.push("Netlify stub function must use the shared CORS policy.");
+}
+if (!netlifyCspReport.includes("64 * 1024") || !netlifyCspReport.includes("ACCEPTED_CONTENT_TYPES")) {
+  issues.push("Netlify CSP report function must enforce size and content-type limits.");
 }
 
 const $ = cheerio.load(html);
@@ -86,6 +139,8 @@ for (const [name, source] of [
   ["middleware.js", middleware],
   ["api/stub.js", stub],
   ["nginx.conf", nginxConfig],
+  ["netlify/functions/stub.mjs", netlifyStub],
+  ["netlify/functions/csp-report.mjs", netlifyCspReport],
 ]) {
   if (/Access-Control-Allow-Origin["'\s:,]*["']\*["']/i.test(source)) {
     issues.push(`${name} must not emit a wildcard Access-Control-Allow-Origin.`);
