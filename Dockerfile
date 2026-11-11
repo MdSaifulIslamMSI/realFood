@@ -1,4 +1,4 @@
-﻿FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 
 LABEL org.opencontainers.image.title="realfood-mirror" \
       org.opencontainers.image.description="Air-gapped, zero-leakage offline mirror of realfood.gov" \
