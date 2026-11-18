@@ -44,7 +44,7 @@
     "test": "npm run test:unit"
   },
   "dependencies": {
-    "htmlparser2": "^9.1.0"
+    "htmlparser2": "^12.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
